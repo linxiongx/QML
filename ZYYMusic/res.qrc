@@ -1,0 +1,25 @@
+<RCC>
+    <qresource prefix="/Image">
+        <file>Res/title/close.png</file>
+        <file>Res/title/mirror.png</file>
+        <file>Res/LoginState/message.png</file>
+        <file>Res/LoginState/setting.png</file>
+        <file>Res/LoginState/skin.png</file>
+        <file>Res/LoginState/user.png</file>
+        <file>Res/LoginState/Microphone.png</file>
+        <file>Res/LoginState/search.png</file>
+        <file>Res/LoginState/delete.png</file>
+        <file>Res/MainLogin/QrCode.png</file>
+        <file>Res/MainLogin/code.png</file>
+        <file>Res/MainLogin/ZyyMusic.png</file>
+        <file>Res/MainLogin/China.png</file>
+        <file>Res/MainLogin/Usa.png</file>
+        <file>Res/MainLogin/CloseEye.png</file>
+        <file>Res/MainLogin/OpenEye.png</file>
+        <file>Res/MainLogin/clear.png</file>
+        <file>Res/MainLogin/qq.png</file>
+        <file>Res/MainLogin/wangyi.png</file>
+        <file>Res/MainLogin/weibo.png</file>
+        <file>Res/MainLogin/weixin.png</file>
+    </qresource>
+</RCC>
