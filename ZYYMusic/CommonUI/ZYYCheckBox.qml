@@ -9,7 +9,7 @@ Item
     property alias checked: idCheckBoxRect.selected;
 
     height: 25;
-    width: idCheckBoxRect.width + idLabel.width;
+    width: idCheckBoxRow.implicitWidth;
 
     MouseArea
     {
@@ -34,9 +34,10 @@ Item
 
     Row
     {
+        id: idCheckBoxRow;
         anchors.left: parent.left;
         anchors.verticalCenter: parent.verticalCenter;
-        spacing: 10;
+        spacing: 5;
         Rectangle
         {
             id: idCheckBoxRect;
@@ -78,7 +79,7 @@ Item
             font.bold: true;
             font.family: BasicConfig.commFont;
             font.pixelSize: 18;
-            anchors.verticalCenter: parent.verticalCenter;
+            anchors.verticalCenter: idCheckBoxRect.verticalCenter;
             text: idCheckBox.text;
             color: idCheckBox.enabled ? "#ddd" : "#2f2f34";
             textFormat: Text.RichText
