@@ -7,7 +7,7 @@ TextField
     Connections
     {
         target: BasicConfig;
-        function onBlanAreaClicked()
+        function onBlankAreaClicked()
         {
             idInnerRect.positionValue = 1;
         }

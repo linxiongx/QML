@@ -29,7 +29,7 @@ Window
         }
         onClicked:
         {
-            BasicConfig.blanAreaClicked();
+            BasicConfig.blankAreaClicked();
         }
     }
 }

@@ -1,5 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlEngine>
 
 int main(int argc, char *argv[])
 {
@@ -8,6 +9,7 @@ int main(int argc, char *argv[])
     qputenv("QT_QUICK_CONTROLS_STYLE", QByteArray("Fusion"));
 
     QQmlApplicationEngine engine;
+    qmlRegisterSingletonType(QUrl("qrc:/qt/qml/ZYYMusic/Basic/BasicConfig.qml"), "Basic", 1, 0, "BasicConfig");
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
@@ -15,8 +17,6 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
     engine.loadFromModule("ZYYMusic", "Main");
-
-    //qmlRegisterSingletonType(QUrl("qrc:/Basic/BasicConfig.qml"), "BasicConfig", 1, 0, "BasicConfig");
 
     return app.exec();
 }

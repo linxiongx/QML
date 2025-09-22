@@ -1,7 +1,7 @@
 //实现一个可以接收快捷键的输入框（不可编辑）
 import QtQuick
 import QtQuick.Controls
-import "../Basic"
+import Basic 1.0
 
 TextField
 {
@@ -18,7 +18,7 @@ TextField
     Connections
     {
         target: BasicConfig;
-        function onBlanAreaClicked()
+        function onBlankAreaClicked()
         {
             focus = false;
         }

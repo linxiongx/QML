@@ -32,7 +32,6 @@ qt_add_qml_module(appZYYMusic
         QML_FILES RightPage/Search.qml
         QML_FILES CommonUI/ZYYSearchBox.qml
         QML_FILES Basic/BasicConfig.qml
-        RESOURCES Basic/qmldir
         QML_FILES mainPopups/LoginPopup.qml
         QML_FILES mainPopups/LoginByOtherMainsPopup.qml
         QML_FILES CommonUI/TextFiledCtrl.qml
@@ -49,6 +48,7 @@ qt_add_qml_module(appZYYMusic
         QML_FILES CommonUI/ZYYShotcutTextField.qml
         QML_FILES RightPage/StackPages/SettingItem/ShortCut.qml
         QML_FILES RightPage/StackPages/SettingItem/SoundAndDownload.qml
+        QML_FILES RightPage/StackPages/SettingItem/DesktopLyrics.qml
         QML_FILES CommonUI/ZYYDowloadFolderDialog.qml
 )
 

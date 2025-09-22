@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Controls
-import "../Basic"
 import "../CommonUI"
+import Basic 1.0
+
 Item
 {
     id: idCheckBox
