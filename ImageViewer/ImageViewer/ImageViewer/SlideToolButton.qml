@@ -11,6 +11,7 @@ MyToolButton
 
     property alias marginValue: idMenu.marginValue;
     required property string imageSource;
+    property string currentEffect: "none";
 
     signal imageFileSourceChanged(string strFilePath);
 
@@ -131,7 +132,7 @@ MyToolButton
             ButtonGroup.group: idEffectGroup;
             onTriggered:
             {
-                console.log("点击10s");
+                idToolButton.currentEffect = "none";
             }
         }
 
@@ -141,7 +142,7 @@ MyToolButton
             ButtonGroup.group: idEffectGroup;
             onTriggered:
             {
-                console.log("点击10s");
+                idToolButton.currentEffect = "flip";
             }
         }
     }

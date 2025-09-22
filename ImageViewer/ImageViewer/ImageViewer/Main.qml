@@ -96,7 +96,20 @@ ApplicationWindow
         target: idSlideToolButton;
         function onImageFileSourceChanged(strFilePath)
         {
-            idImage.source = "file:///" + strFilePath;
+            if (idSlideToolButton.currentEffect === "flip") {
+                // 播放翻转动画
+                idFlipAnimation.start();
+                // 动画完成后切换图片
+                idFlipAnimation.onStopped.connect(function() {
+                    idImage.source = "file:///" + strFilePath;
+                    idFlipBackAnimation.start();
+                    // 断开连接，避免重复连接
+                    idFlipAnimation.onStopped.disconnect(arguments.callee);
+                });
+            } else {
+                // 无效果，直接切换图片
+                idImage.source = "file:///" + strFilePath;
+            }
         }
     }
 
@@ -132,10 +145,10 @@ ApplicationWindow
             {
                 id: idImage;
 
-                width: idContainer.width;
-                height: idContainer.height;
-                x: (idContainer.width - sourceSize.width) / 2;
-                y: (idContainer.height - sourceSize.height) / 2;
+                width: sourceSize.width;
+                height: sourceSize.height;
+                x: (idContainer.width - idImage.sourceSize.width) / 2;
+                y: (idContainer.height - idImage.sourceSize.height) / 2;
 
                 // width: 500;
                 // height: 500;
@@ -148,19 +161,33 @@ ApplicationWindow
                 //source: Qt.resolvedUrl("file:///H:\\图片\\Snipaste 1816x1028_000093.png");
                 fillMode: Image.PreserveAspectFit
 
-                transform: Scale
-                {
-                    id: idImageScale;
-                    origin.x: idImage.width / 2;
-                    origin.y: idImage.height / 2;
-                    xScale: 1.0;
-                    yScale: 1.0;
-                }
+                transform: [
+                    Scale
+                    {
+                        id: idImageScale;
+                        origin.x: idImage.width / 2;
+                        origin.y: idImage.height / 2;
+                        xScale: 1.0;
+                        yScale: 1.0;
+                    },
+                    Rotation
+                    {
+                        id: idImageRotation;
+                        origin.x: idImage.width / 2;
+                        origin.y: idImage.height / 2;
+                        axis { x: 0; y: 1; z: 0 }
+                        angle: 0
+                    }
+                ]
 
                 onSourceChanged:
                 {
                     idImageScale.xScale = 1.0;
                     idImageScale.yScale = 1.0;
+
+                    // 确保图片居中显示
+                    idImage.x = (idContainer.width - idImage.sourceSize.width) / 2;
+                    idImage.y = (idContainer.height - idImage.sourceSize.height) / 2;
 
                     idImageAnimation.start();
                 }
@@ -188,6 +215,61 @@ ApplicationWindow
                         from: 0;
                         to: 1;
                         duration: 300;
+                    }
+                }
+
+                // 翻转动画
+                SequentialAnimation
+                {
+                    id: idFlipAnimation;
+
+                    ParallelAnimation
+                    {
+                        RotationAnimation
+                        {
+                            target: idImageRotation;
+                            property: "angle";
+                            from: 0;
+                            to: 90;
+                            duration: 250;
+                            easing.type: Easing.InOutQuad;
+                        }
+
+                        NumberAnimation
+                        {
+                            target: idImage;
+                            property: "opacity";
+                            from: 1;
+                            to: 0.3;
+                            duration: 250;
+                        }
+                    }
+                }
+
+                SequentialAnimation
+                {
+                    id: idFlipBackAnimation;
+
+                    ParallelAnimation
+                    {
+                        RotationAnimation
+                        {
+                            target: idImageRotation;
+                            property: "angle";
+                            from: 90;
+                            to: 0;
+                            duration: 250;
+                            easing.type: Easing.InOutQuad;
+                        }
+
+                        NumberAnimation
+                        {
+                            target: idImage;
+                            property: "opacity";
+                            from: 0.3;
+                            to: 1;
+                            duration: 250;
+                        }
                     }
                 }
             }
@@ -230,6 +312,10 @@ ApplicationWindow
 
                              idImageScale.xScale = newScale;
                              idImageScale.yScale = newScale;
+
+                             // 缩放时重新计算居中位置
+                             idImage.x = (idContainer.width - idImage.sourceSize.width * newScale) / 2;
+                             idImage.y = (idContainer.height - idImage.sourceSize.height * newScale) / 2;
 
                              idScanInfoLayout.visible = true;
                              idScanInfoTimer.start();
