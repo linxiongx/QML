@@ -5,14 +5,12 @@ import QtQuick.Layouts
 import "../../../Basic"
 import "../../../CommonUI"
 
-Item
-{
+Item {
     anchors.left: parent.left;
     anchors.right: parent.right;
     height: 800;
 
-    Label
-    {
+    Label {
         id: idDestopLyricsLabel;
         anchors.left: parent.left;
         anchors.top: parent.top;
@@ -24,53 +22,44 @@ Item
         color: "white";
     }
 
-    Column
-    {
+    Column {
         anchors.left: idDestopLyricsLabel.right;
         anchors.leftMargin: 70;
         anchors.right: parent.right;
         anchors.top: idDestopLyricsLabel.top;
         spacing: 30;
 
-        Row
-        {
+        Row {
             anchors.left: parent.left;
             anchors.right: parent.right;
             spacing: 10;
 
-            ZYYCheckBox
-            {
+            ZYYCheckBox {
                 text: "启用桌面歌词"
                 checked: true;
             }
-            ZYYCheckBox
-            {
+            ZYYCheckBox {
                 text: "启用歌词总在最前"
                 checked: true;
             }
-            ZYYCheckBox
-            {
+            ZYYCheckBox {
                 text: "外文歌曲显示翻译"
                 checked: true;
             }
-            ZYYCheckBox
-            {
+            ZYYCheckBox {
                 text: "外文歌词显示音译"
             }
         }
 
-        Row
-        {
+        Row {
 
             anchors.left: parent.left;
             anchors.right: parent.right;
             spacing: 70;
 
-            Repeater
-            {
+            Repeater {
 
-                model: ListModel
-                {
+                model: ListModel {
                     id: idListModel;
                     ListElement{name: "字体";}
                     ListElement{name: "字号";}
@@ -78,12 +67,10 @@ Item
                     ListElement{name: "描边";}
                 }
 
-                delegate: Item
-                {
+                delegate: Item {
                     width: 100;
                     height: idLabel.implicitHeight + 25 + 10
-                    Label
-                    {
+                    Label {
                         anchors.left: parent.left;
                         anchors.leftMargin: 10;
                         anchors.top: parent.top;
@@ -93,8 +80,7 @@ Item
                         font.pixelSize: 18;
                         color: "white";
                     }
-                    ZYYComboBox
-                    {
+                    ZYYComboBox {
                         anchors.left: parent.left;
                         anchors.top: idLabel.bottom;
                         anchors.topMargin: 10;
@@ -134,31 +120,26 @@ Item
             }
         }
 
-        Item
-        {
+        Item {
             height: 50;
             width: parent.width;
 
-            Label
-            {
+            Label {
                 id: idAdjustFormat;
                 text: "调整样式";
                 font.family: "黑体"
                 font.pixelSize: 18;
                 color: "white";
             }
-            Row
-            {
+            Row {
                 anchors.left: parent.left;
                 anchors.top: idAdjustFormat.bottom;
                 anchors.topMargin: 10;
                 spacing: 50;
 
-                Repeater
-                {
+                Repeater {
                     model: [["单行显示", "多行显示"],["横排显示", "竖排显示"],["左对齐", "右对齐"]]
-                    ZYYComboBox
-                    {
+                    ZYYComboBox {
                         height: 25;
                         width: 120;
                         model: modelData;
@@ -168,12 +149,10 @@ Item
             }
         }
 
-        Item
-        {
+        Item {
             height: 50;
             width: parent.width;
-            Label
-            {
+            Label {
                 id: idChangeColorLabel;
                 text: "更改配色方案";
                 font.family: "黑体"
@@ -181,24 +160,20 @@ Item
                 color: "#ddd";
             }
 
-            Row
-            {
+            Row {
                 anchors.left: parent.left;
                 anchors.top: idChangeColorLabel.bottom;
                 anchors.topMargin: 10;
                 spacing: 50;
 
-                ZYYComboBox
-                {
+                ZYYComboBox {
                     model: ["自定义", "周易红", "落日晖", "可爱粉", "清新绿", "活力紫", "温柔黄", "低调灰"]
                     defaultText: "周易红";
                 }
 
-                Repeater
-                {
+                Repeater {
                     model: ["已播放", "未播放"]
-                    delegate: Rectangle
-                    {
+                    delegate: Rectangle {
                         radius: 15;
                         width: 150;
                         height: 30;
@@ -206,23 +181,20 @@ Item
                         border.color: "#28282e";
                         color: "#1a1a20"
 
-                        Rectangle
-                        {
+                        Rectangle {
                             id: idColorRect;
                             width: parent.height / 2;
                             height: width;
                             anchors.left: parent.left;
                             anchors.leftMargin: 20;
                             anchors.verticalCenter: parent.verticalCenter;
-                            gradient: Gradient
-                            {
+                            gradient: Gradient {
                                 GradientStop { position: 0; color: modelData === "已播放" ? BasicConfig.finishedLyricsUpColor : BasicConfig.unFinishedLyricsUpColor}
                                 GradientStop { position: 1; color: modelData === "已播放" ? BasicConfig.finishedLyricsDownColor : BasicConfig.unFinishedLyricsDownColor}
                             }
                         }
 
-                        Text
-                        {
+                        Text {
                             id: idColorSelecText
                             color: "#ddd";
                             text: modelData;
@@ -233,8 +205,7 @@ Item
                             anchors.verticalCenter:  idColorRect.verticalCenter;
                         }
 
-                        MouseArea
-                        {
+                        MouseArea {
                             anchors.fill: parent;
                             hoverEnabled: true;
                             onEntered: cursorShape = Qt.PointingHandCursor;
@@ -254,7 +225,56 @@ Item
             }
         }
 
+        Item {
+            id: previewItem
+            height: 200
+            width: parent.width
 
+            Label {
+                id: previewLabel
+                text: "预览"
+                font.family: "黑体"
+                font.pixelSize: 18
+                color: "#ddd"
+                anchors.top: parent.top
+                anchors.left: parent.left
+            }
+
+            Rectangle {
+                anchors.top: previewLabel.bottom
+                anchors.topMargin: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 400
+                height: 120
+                radius: 10
+                border.color: "#ddd"
+                border.width: 1
+                color: "#1a1a20"
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 10
+                    width: parent.width - 40
+
+                    Text {
+                        text: "未播放歌词样例：这是一行未播放的歌词文本。"
+                        font.family: BasicConfig.commFont || "黑体"
+                        font.pixelSize: 20
+                        color: BasicConfig.unFinishedLyricsUpColor || "#999"
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        text: "已播放歌词样例：这是一行已播放的歌词文本。"
+                        font.family: BasicConfig.commFont || "黑体"
+                        font.pixelSize: 20
+                        color: BasicConfig.finishedLyricsUpColor || "#fff"
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
 
         // 已播放颜色对话框
         ColorDialog {

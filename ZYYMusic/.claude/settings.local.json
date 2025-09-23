@@ -3,7 +3,8 @@
     "allow": [
       "Bash(find:*)",
       "Bash(build\\Debug\\appZYYMusic.exe)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
