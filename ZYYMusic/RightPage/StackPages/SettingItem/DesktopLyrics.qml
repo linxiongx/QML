@@ -182,27 +182,28 @@ Item {
                         color: "#1a1a20"
 
                         Rectangle {
-                            id: idColorRect;
+                            id: colorRect;
                             width: parent.height / 2;
                             height: width;
                             anchors.left: parent.left;
                             anchors.leftMargin: 20;
                             anchors.verticalCenter: parent.verticalCenter;
                             gradient: Gradient {
-                                GradientStop { position: 0; color: modelData === "已播放" ? BasicConfig.finishedLyricsUpColor : BasicConfig.unFinishedLyricsUpColor}
-                                GradientStop { position: 1; color: modelData === "已播放" ? BasicConfig.finishedLyricsDownColor : BasicConfig.unFinishedLyricsDownColor}
+                                GradientStop { position: 0; color: modelData === "已播放" ?
+BasicConfig.finishedLyricsUpColor : BasicConfig.unFinishedLyricsUpColor}
+                                GradientStop { position: 1; color: modelData === "已播放" ?
+BasicConfig.finishedLyricsDownColor : BasicConfig.unFinishedLyricsDownColor}
                             }
                         }
 
                         Text {
-                            id: idColorSelecText
                             color: "#ddd";
                             text: modelData;
                             font.pixelSize: 20;
-                            anchors.left: idColorRect.right;
+                            anchors.left: colorRect.right;
                             anchors.leftMargin: 10;
                             font.family: BasicConfig.commFont;
-                            anchors.verticalCenter:  idColorRect.verticalCenter;
+                            anchors.verticalCenter:  colorRect.verticalCenter;
                         }
 
                         MouseArea {
@@ -212,11 +213,9 @@ Item {
                             onExited: cursorShape = Qt.ArrowCursor;
                             onClicked: {
                                 if (modelData === "已播放") {
-                                    finishedColorDialog.selectedColor = BasicConfig.finishedLyricsUpColor;
-                                    finishedColorDialog.open();
+                                    finishedPopup.open();
                                 } else {
-                                    unfinishedColorDialog.selectedColor = BasicConfig.unFinishedLyricsUpColor;
-                                    unfinishedColorDialog.open();
+                                    unfinishedPopup.open();
                                 }
                             }
                         }
@@ -227,7 +226,7 @@ Item {
 
         Item {
             id: previewItem
-            height: 200
+            height: 120
             width: parent.width
 
             Label {
@@ -243,68 +242,496 @@ Item {
             Rectangle {
                 anchors.top: previewLabel.bottom
                 anchors.topMargin: 20
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 400
-                height: 120
+                anchors.left: previewLabel.left
+                anchors.right: parent.right
+                anchors.rightMargin: 150
+                height: 140
                 radius: 10
                 border.color: "#ddd"
                 border.width: 1
                 color: "#1a1a20"
 
-                Column {
+                Canvas {
+                    id: previewCanvas
                     anchors.centerIn: parent
-                    spacing: 10
                     width: parent.width - 40
+                    height: 60
 
-                    Text {
-                        text: "未播放歌词样例：这是一行未播放的歌词文本。"
-                        font.family: BasicConfig.commFont || "黑体"
-                        font.pixelSize: 20
-                        color: BasicConfig.unFinishedLyricsUpColor || "#999"
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.WordWrap
+                    onPaint: {
+                        var ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+
+                        var fontSize = Math.min(30, width / 6);
+                        ctx.font = fontSize + "px " + (BasicConfig.commFont || "黑体");
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+
+                        var text = "网易云音乐";
+                        var x = width / 2;
+                        var y = height / 2;
+
+                        // Left half: finished gradient vertical
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(0, 0, width / 2, height);
+                        ctx.clip();
+
+                        var grad1 = ctx.createLinearGradient(width / 4, 0, width / 4, height);
+                        grad1.addColorStop(0.0, BasicConfig.finishedLyricsUpColor || "#ee8784");
+                        grad1.addColorStop(1.0, BasicConfig.finishedLyricsDownColor || "#f3b1");
+                        ctx.fillStyle = grad1;
+                        ctx.fillText(text, x, y);
+                        ctx.restore();
+
+                        // Right half: unfinished gradient vertical
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(width / 2, 0, width / 2, height);
+                        ctx.clip();
+
+                        var grad2 = ctx.createLinearGradient(3 * width / 4, 0, 3 * width / 4, height);
+                        grad2.addColorStop(0.0, BasicConfig.unFinishedLyricsUpColor || "white");
+                        grad2.addColorStop(1.0, BasicConfig.unFinishedLyricsDownColor || "#ddd");
+                        ctx.fillStyle = grad2;
+                        ctx.fillText(text, x, y);
+                        ctx.restore();
                     }
-                    Text {
-                        text: "已播放歌词样例：这是一行已播放的歌词文本。"
-                        font.family: BasicConfig.commFont || "黑体"
-                        font.pixelSize: 20
-                        color: BasicConfig.finishedLyricsUpColor || "#fff"
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.WordWrap
+
+                    Connections {
+                        target: BasicConfig
+                        function onColorSchemeUpdated(scheme) {
+                            previewCanvas.requestPaint();
+                        }
                     }
                 }
             }
         }
 
-        // 已播放颜色对话框
-        ColorDialog {
-            id: finishedColorDialog
-            title: "选择已播放颜色"
-            selectedColor: BasicConfig.finishedLyricsUpColor
-            onAccepted: {
-                console.log("已播放颜色接受: " + selectedColor.toString());
-                var scheme = BasicConfig.colorScheme || {};
-                scheme.finishedUp = selectedColor;
-                BasicConfig.updateScheme(scheme);
+        Popup {
+            id: finishedPopup
+            modal: true
+            anchors.centerIn: parent
+            closePolicy: Popup.NoAutoClose
+            width: 340
+            height: 280
+            property color selectedUp
+            property color selectedDown
+
+            onOpened: {
+                selectedUp = BasicConfig.finishedLyricsUpColor;
+                selectedDown = BasicConfig.finishedLyricsDownColor;
             }
-            onRejected: {
-                console.log("已播放颜色取消");
+
+            background: Rectangle {
+                color: "#1a1a20"
+                border.color: "#ddd"
+                border.width: 2
+                radius: 15
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#1f1f25" }
+                    GradientStop { position: 1.0; color: "#1a1a20" }
+                }
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 10
+                    width: 25
+                    height: 25
+                    radius: 15
+                    color: "#2a2a30"
+                    border.color: "#ddd"
+                    border.width: 1
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "×"
+                        color: "white"
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: parent.color = "#e74c3c"
+                        onExited: parent.color = "#2a2a30"
+                        onClicked: finishedPopup.close()
+                    }
+                }
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 30
+                anchors.topMargin: 30
+                spacing: 25
+
+                Text {
+                    text: "已播放颜色设置"
+                    color: "white"
+                    font.pixelSize: 20
+                    font.bold: true
+                    font.family: "黑体"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 300
+                    height: 50
+                    radius: 8
+                    color: "#1a1a20"
+
+                    Row {
+                        spacing: 8
+                        anchors.centerIn: parent
+
+                        Rectangle {
+                            width: 80
+                            height: 35
+                            radius: 5
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: finishedPopup.selectedUp }
+                                GradientStop { position: 1.0; color: finishedPopup.selectedDown }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 100
+                            height: 35
+                            color: "#1a1a20"
+                            radius: 5
+                            Row {
+                                spacing: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Rectangle {
+                                    width: 25
+                                    height: 25
+                                    radius: 3
+                                    color: finishedPopup.selectedUp
+                                }
+                                Text {
+                                    text: "上色"
+                                    color: "#ddd"
+                                    font.pixelSize: 12
+                                    font.family: BasicConfig.commFont
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    finishedUpColorDialog.open()
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 100
+                            height: 35
+                            color: "#1a1a20"
+                            radius: 5
+                            Row {
+                                spacing: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Rectangle {
+                                    width: 25
+                                    height: 25
+                                    radius: 3
+                                    color: finishedPopup.selectedDown
+                                }
+                                Text {
+                                    text: "下色"
+                                    color: "#ddd"
+                                    font.pixelSize: 12
+                                    font.family: BasicConfig.commFont
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    finishedDownColorDialog.open()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 120
+                    height: 45
+                    text: "确认"
+                    background: Rectangle {
+                        color: "#e74c3c"
+                        radius: 8
+                        border.color: "#c0392b"
+                        border.width: 1
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: "white"
+                        font.pixelSize: 18
+                        font.bold: true
+                        font.family: "黑体"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: {
+                        var scheme = BasicConfig.colorScheme || {};
+                        scheme.finishedUp = finishedPopup.selectedUp;
+                        scheme.finishedDown = finishedPopup.selectedDown;
+                        BasicConfig.updateScheme(scheme);
+                        previewCanvas.requestPaint();
+                        finishedPopup.close();
+                    }
+                }
             }
         }
 
-        // 未播放颜色对话框
+        Popup {
+            id: unfinishedPopup
+            modal: true
+            anchors.centerIn: parent
+            closePolicy: Popup.NoAutoClose
+            width: 340
+            height: 280
+            property color selectedUp
+            property color selectedDown
+
+            onOpened: {
+                selectedUp = BasicConfig.unFinishedLyricsUpColor;
+                selectedDown = BasicConfig.unFinishedLyricsDownColor;
+            }
+
+            background: Rectangle {
+                color: "#1a1a20"
+                border.color: "#ddd"
+                border.width: 2
+                radius: 15
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#1f1f25" }
+                    GradientStop { position: 1.0; color: "#1a1a20" }
+                }
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 10
+                    width: 25
+                    height: 25
+                    radius: 15
+                    color: "#2a2a30"
+                    border.color: "#ddd"
+                    border.width: 1
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "×"
+                        color: "white"
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: parent.color = "#e74c3c"
+                        onExited: parent.color = "#2a2a30"
+                        onClicked: unfinishedPopup.close()
+                    }
+                }
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 30
+                anchors.topMargin: 30
+                spacing: 25
+
+                Text {
+                    text: "未播放颜色设置"
+                    color: "white"
+                    font.pixelSize: 20
+                    font.bold: true
+                    font.family: "黑体"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Rectangle {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 300
+                    height: 50
+                    radius: 8
+                    color: "#1a1a20"
+
+                    Row {
+                        spacing: 8
+                        anchors.centerIn: parent
+
+                        Rectangle {
+                            width: 80
+                            height: 35
+                            radius: 5
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: unfinishedPopup.selectedUp }
+                                GradientStop { position: 1.0; color: unfinishedPopup.selectedDown }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 100
+                            height: 35
+                            color: "#1a1a20"
+                            radius: 5
+                            Row {
+                                spacing: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Rectangle {
+                                    width: 25
+                                    height: 25
+                                    radius: 3
+                                    color: unfinishedPopup.selectedUp
+                                }
+                                Text {
+                                    text: "上色"
+                                    color: "#ddd"
+                                    font.pixelSize: 12
+                                    font.family: BasicConfig.commFont
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    unfinishedUpColorDialog.open()
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 100
+                            height: 35
+                            color: "#1a1a20"
+                            radius: 5
+                            Row {
+                                spacing: 5
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                Rectangle {
+                                    width: 25
+                                    height: 25
+                                    radius: 3
+                                    color: unfinishedPopup.selectedDown
+                                }
+                                Text {
+                                    text: "下色"
+                                    color: "#ddd"
+                                    font.pixelSize: 12
+                                    font.family: BasicConfig.commFont
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    unfinishedDownColorDialog.open()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: 120
+                    height: 45
+                    text: "确认"
+                    background: Rectangle {
+                        color: "#e74c3c"
+                        radius: 8
+                        border.color: "#c0392b"
+                        border.width: 1
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        color: "white"
+                        font.pixelSize: 18
+                        font.bold: true
+                        font.family: "黑体"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: {
+                        var scheme = BasicConfig.colorScheme || {};
+                        scheme.unFinishedUp = unfinishedPopup.selectedUp;
+                        scheme.unFinishedDown = unfinishedPopup.selectedDown;
+                        BasicConfig.updateScheme(scheme);
+                        previewCanvas.requestPaint();
+                        unfinishedPopup.close();
+                    }
+                }
+            }
+        }
+
+        // 已播放上颜色对话框
         ColorDialog {
-            id: unfinishedColorDialog
-            title: "选择未播放颜色"
-            selectedColor: BasicConfig.unFinishedLyricsUpColor
+            id: finishedUpColorDialog
+            title: "选择已播放上颜色"
+            selectedColor: BasicConfig.finishedLyricsUpColor
             onAccepted: {
-                console.log("未播放颜色接受: " + selectedColor.toString());
-                var scheme = BasicConfig.colorScheme || {};
-                scheme.unFinishedUp = selectedColor;
-                BasicConfig.updateScheme(scheme);
+                console.log("已播放上颜色接受: " + selectedColor.toString());
+                finishedPopup.selectedUp = selectedColor;
             }
             onRejected: {
-                console.log("未播放颜色取消");
+                console.log("已播放上颜色取消");
+            }
+        }
+
+        // 已播放下颜色对话框
+        ColorDialog {
+            id: finishedDownColorDialog
+            title: "选择已播放下颜色"
+            selectedColor: BasicConfig.finishedLyricsDownColor
+            onAccepted: {
+                console.log("已播放下颜色接受: " + selectedColor.toString());
+                finishedPopup.selectedDown = selectedColor;
+            }
+            onRejected: {
+                console.log("已播放下颜色取消");
+            }
+        }
+
+        // 未播放上颜色对话框
+        ColorDialog {
+            id: unfinishedUpColorDialog
+            title: "选择未播放上颜色"
+            selectedColor: BasicConfig.unFinishedLyricsUpColor
+            onAccepted: {
+                console.log("未播放上颜色接受: " + selectedColor.toString());
+                unfinishedPopup.selectedUp = selectedColor;
+            }
+            onRejected: {
+                console.log("未播放上颜色取消");
+            }
+        }
+
+        // 未播放下颜色对话框
+        ColorDialog {
+            id: unfinishedDownColorDialog
+            title: "选择未播放下颜色"
+            selectedColor: BasicConfig.unFinishedLyricsDownColor
+            onAccepted: {
+                console.log("未播放下颜色接受: " + selectedColor.toString());
+                unfinishedPopup.selectedDown = selectedColor;
+            }
+            onRejected: {
+                console.log("未播放下颜色取消");
             }
         }
     }

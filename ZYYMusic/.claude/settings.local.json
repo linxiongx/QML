@@ -4,7 +4,11 @@
       "Bash(find:*)",
       "Bash(build\\Debug\\appZYYMusic.exe)",
       "WebSearch",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(if [ ! -d build ])",
+      "Bash(fi:*)",
+      "Bash(cmake:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

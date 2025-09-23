@@ -50,6 +50,10 @@ qt_add_qml_module(appZYYMusic
         QML_FILES RightPage/StackPages/SettingItem/SoundAndDownload.qml
         QML_FILES RightPage/StackPages/SettingItem/DesktopLyrics.qml
         QML_FILES CommonUI/ZYYDowloadFolderDialog.qml
+        QML_FILES RightPage/StackPages/Featured.qml
+        QML_FILES RightPage/StackPages/PlaylistSquare.qml
+        QML_FILES RightPage/StackPages/Rankings.qml
+        QML_FILES RightPage/StackPages/Artists.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

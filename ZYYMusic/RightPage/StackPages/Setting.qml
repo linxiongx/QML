@@ -101,6 +101,21 @@ Item
                         onClicked:
                         {
                             idSelectorRep.selectedIndex = index;
+                            // 滚动到对应 section
+                            var targetY = 0;
+                            switch(index) {
+                                case 0: targetY = accountSection.y - 30; break;
+                                case 1: targetY = generalSection.y - 30; break;
+                                case 2: targetY = systemSection.y - 30; break;
+                                case 3: targetY = playSection.y - 30; break;
+                                case 4: targetY = messagingSection.y - 30; break;
+                                case 5: targetY = shortcutSection.y - 30; break;
+                                case 6: targetY = soundSection.y - 30; break;
+                                case 7: targetY = desktopSection.y - 30; break;
+                                case 8: targetY = toolSection.y - 30; break;
+                                case 9: targetY = aboutSection.y - 30; break;
+                            }
+                            idFlick.contentY = Math.max(0, targetY);
                         }
                     }
                 }
@@ -123,12 +138,48 @@ Item
         Flickable
         {
             id: idFlick;
+            property real threshold0: accountSection.y + accountSection.height + 31; // 进入常规，+spacing+divider
+            property real threshold1: generalSection.y + generalSection.height + 31; // 进入系统
+            property real threshold2: systemSection.y + systemSection.height + 31; // 进入播放
+            property real threshold3: playSection.y + playSection.height + 31; // 进入消息
+            property real threshold4: messagingSection.y + messagingSection.height + 31; // 进入快捷键
+            property real threshold5: shortcutSection.y + shortcutSection.height + 31; // 进入音质
+            property real threshold6: soundSection.y + soundSection.height + 31; // 进入桌面
+            property real threshold7: desktopSection.y + desktopSection.height + 31; // 进入工具
+            property real threshold8: toolSection.y + toolSection.height + 31; // 进入关于
+            property real threshold9: aboutSection.y + aboutSection.height + 1000; // 末尾，确保关于高亮
+
+            onContentYChanged: {
+                if (contentY < threshold0) {
+                    idSelectorRep.selectedIndex = 0;
+                } else if (contentY < threshold1) {
+                    idSelectorRep.selectedIndex = 1;
+                } else if (contentY < threshold2) {
+                    idSelectorRep.selectedIndex = 2;
+                } else if (contentY < threshold3) {
+                    idSelectorRep.selectedIndex = 3;
+                } else if (contentY < threshold4) {
+                    idSelectorRep.selectedIndex = 4;
+                } else if (contentY < threshold5) {
+                    idSelectorRep.selectedIndex = 5;
+                } else if (contentY < threshold6) {
+                    idSelectorRep.selectedIndex = 6;
+                } else if (contentY < threshold7) {
+                    idSelectorRep.selectedIndex = 7;
+                } else if (contentY < threshold8) {
+                    idSelectorRep.selectedIndex = 8;
+                } else if (contentY < threshold9) {
+                    idSelectorRep.selectedIndex = 9;
+                } else {
+                    idSelectorRep.selectedIndex = 9;
+                }
+            }
             anchors.left: parent.left;
             anchors.right: parent.right;
             anchors.top: idCutLine01.bottom;
             anchors.topMargin: 10;
             anchors.bottom: parent.bottom;
-            contentHeight: 4800;
+            contentHeight: 6000;
             clip: true;
             ScrollBar.vertical: ScrollBar
             {
@@ -150,8 +201,8 @@ Item
                 anchors.topMargin: 30;
                 spacing: 30;
                 //账号
-                Counter
-                {
+                Counter {
+                    id: accountSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -166,8 +217,8 @@ Item
                 }
 
                 //常规
-                Standard
-                {
+                Standard {
+                    id: generalSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -182,8 +233,8 @@ Item
                 }
 
                 //系统
-                SystemConfig
-                {
+                SystemConfig {
+                    id: systemSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -198,8 +249,8 @@ Item
                 }
 
                 //播放
-                Play
-                {
+                Play {
+                    id: playSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -214,8 +265,8 @@ Item
                 }
 
                 //消息与隐私
-                MessagingPrivacy
-                {
+                MessagingPrivacy {
+                    id: messagingSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -230,8 +281,8 @@ Item
                 }
 
                 //快捷键
-                ShortCut
-                {
+                ShortCut {
+                    id: shortcutSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -247,8 +298,8 @@ Item
 
 
                 //音质与下载
-                SoundAndDownload
-                {
+                SoundAndDownload {
+                    id: soundSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                 }
@@ -263,11 +314,55 @@ Item
                 }
 
                 //桌面歌词
-                DesktopLyrics
-                {
+                DesktopLyrics {
+                    id: desktopSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
                     height: 800;
+                }
+
+                // 工具占位
+                Item {
+                    id: toolSection
+                    anchors.left: parent.left;
+                    anchors.right: parent.right;
+                    height: 400;
+                    Rectangle {
+                        anchors.fill: parent;
+                        color: "transparent";
+                        Text {
+                            anchors.centerIn: parent;
+                            text: "工具设置（待实现）";
+                            color: "white";
+                            font.pixelSize: 20;
+                        }
+                    }
+                }
+
+                // 分割线
+                Rectangle {
+                    anchors.left: parent.left;
+                    anchors.right: parent.right;
+                    height: 1;
+                    color: "#212127";
+                }
+
+                // 关于网易云音乐占位
+                Item {
+                    id: aboutSection
+                    anchors.left: parent.left;
+                    anchors.right: parent.right;
+                    height: 400;
+                    Rectangle {
+                        anchors.fill: parent;
+                        color: "transparent";
+                        Text {
+                            anchors.centerIn: parent;
+                            text: "关于网易云音乐（待实现）";
+                            color: "white";
+                            font.pixelSize: 20;
+                        }
+                    }
                 }
 
               }

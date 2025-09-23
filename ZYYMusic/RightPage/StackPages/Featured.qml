@@ -42,55 +42,68 @@ Item {
                     "qrc:/Image/Res/PlayMusic/Image/7.jpg"
                 ]
                 property int totalImages: imageList.length
+                property int spacing: 0  // 无间隙无缝轮播
+                property real halfWidth: width / 2  // 每张图片宽度，一次显示两张
+property real itemWidth: halfWidth  // 兼容旧引用
+                property int infiniteCopies: totalImages * 3
+                property real baseOffset: totalImages * (halfWidth + spacing)
 
                 // 多张图片轮播 ListView
                 ListView {
                     id: imageListView
                     anchors.fill: parent
+                    anchors.bottomMargin: 25;
                     orientation: ListView.Horizontal
-                    model: carouselContainer.imageList
+                    model: carouselContainer.infiniteCopies
                     snapMode: ListView.SnapToItem
-                    highlightRangeMode: ListView.StrictlyEnforceRange
+                    highlightRangeMode: ListView.NoHighlightRange  // 移除范围限制
                     interactive: false  // 禁用手动拖拽，只用箭头和timer
                     clip: true
-                    spacing: 10  // 图片间距
+                    spacing: carouselContainer.spacing
 
-                    property real itemWidth: (carouselContainer.width - (carouselContainer.totalImages - 1) * 10) / carouselContainer.totalImages
-                    property real spacing: 10
+                    // 手动 contentWidth，确保全宽支持7张
+                    contentWidth: carouselContainer.infiniteCopies * carouselContainer.halfWidth + (carouselContainer.infiniteCopies - 1) * carouselContainer.spacing
 
                     delegate: Item {
-                        width: imageListView.itemWidth
+                        width: carouselContainer.itemWidth  // 使用容器属性，避免 ListView 内部 property 延迟
                         height: imageListView.height
                         Image {
+                            anchors.leftMargin: 8;
+                            anchors.rightMargin: 8;
                             anchors.fill: parent
-                            anchors.rightMargin: imageListView.spacing  // 右边间距
-                            source: modelData
+                            source: carouselContainer.imageList[index % carouselContainer.totalImages]
                             fillMode: Image.PreserveAspectCrop
                             clip: true
                         }
                     }
 
-                    // 手动设置contentWidth以确保总宽度正确
-                    onWidthChanged: {
-                        contentWidth = carouselContainer.totalImages * itemWidth + (carouselContainer.totalImages - 1) * spacing
-                    }
-                    Component.onCompleted: {
-                        contentWidth = carouselContainer.totalImages * itemWidth + (carouselContainer.totalImages - 1) * spacing
+                    // 平滑动画
+                    Behavior on contentX {
+                        NumberAnimation {
+                            duration: 500
+                            easing.type: Easing.Linear
+                        }
                     }
 
                     onContentXChanged: {
-                        carouselContainer.currentIndex = Math.round((contentX + itemWidth / 2) / (itemWidth + spacing))
+                        var step = carouselContainer.halfWidth + carouselContainer.spacing
+                        var offsetIndex = Math.round((contentX - carouselContainer.baseOffset) / step)
+                        var newIndex = Math.abs(offsetIndex) % carouselContainer.totalImages
+                        if (newIndex !== carouselContainer.currentIndex) {
+                            carouselContainer.currentIndex = newIndex
+                        }
                     }
 
                     // 初始位置
                     Component.onCompleted: {
-                        contentX = carouselContainer.currentIndex * (itemWidth + spacing)
+                        contentX = carouselContainer.baseOffset  // 显示0和1
                     }
                 }
 
                 // 左箭头
                 MouseArea {
                     id: leftArrow
+                    visible:false;
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width: 40
@@ -101,6 +114,7 @@ Item {
                         anchors.fill: parent
                         color: "gray"
                         radius: 20
+                        opacity: 0.7
                         Text {
                             anchors.centerIn: parent
                             text: "<"
@@ -111,15 +125,18 @@ Item {
                     }
 
                     onClicked: {
-                        var nextIndex = (carouselContainer.currentIndex - 1 + carouselContainer.totalImages) % carouselContainer.totalImages;
-                        carouselContainer.currentIndex = nextIndex;
-                        imageListView.contentX = nextIndex * (imageListView.itemWidth + imageListView.spacing);
+                        var nextIndex = (carouselContainer.currentIndex - 1 + carouselContainer.totalImages) %
+                        carouselContainer.totalImages
+                        carouselContainer.currentIndex = nextIndex
+                        imageListView.contentX = carouselContainer.baseOffset + nextIndex * (carouselContainer.halfWidth + carouselContainer.spacing)
+                        console.log("Left clicked, nextIndex:", nextIndex)
                     }
                 }
 
                 // 右箭头
                 MouseArea {
                     id: rightArrow
+                    visible:false;
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: 40
@@ -128,8 +145,9 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: "white"
+                        color: "gray"
                         radius: 20
+                        opacity: 0.7
                         Text {
                             anchors.centerIn: parent
                             text: ">"
@@ -140,16 +158,17 @@ Item {
                     }
 
                     onClicked: {
-                        var nextIndex = (carouselContainer.currentIndex + 1) % carouselContainer.totalImages;
-                        carouselContainer.currentIndex = nextIndex;
-                        imageListView.contentX = nextIndex * (imageListView.itemWidth + imageListView.spacing);
+                        var nextIndex = (carouselContainer.currentIndex + 1) % carouselContainer.totalImages
+                        carouselContainer.currentIndex = nextIndex
+                        imageListView.contentX = carouselContainer.baseOffset + nextIndex * (carouselContainer.halfWidth + carouselContainer.spacing)
+                        console.log("Right clicked, nextIndex:", nextIndex)
                     }
                 }
 
                 // 底部指示器
                 Row {
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 10  // 避免重叠
+                    anchors.bottomMargin: 10
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 8
                     z: 3
@@ -172,21 +191,31 @@ Item {
                     running: true
                     repeat: true
                     onTriggered: {
-                        var nextIndex = (carouselContainer.currentIndex + 1) % carouselContainer.totalImages;
-                        carouselContainer.currentIndex = nextIndex;
-                        imageListView.contentX = nextIndex * (imageListView.itemWidth + imageListView.spacing);
+                        var nextIndex = (carouselContainer.currentIndex + 1) % carouselContainer.totalImages
+                        carouselContainer.currentIndex = nextIndex
+                        imageListView.contentX = carouselContainer.baseOffset + nextIndex * (carouselContainer.halfWidth + carouselContainer.spacing)
+                        console.log("Timer triggered, nextIndex:", nextIndex)
                     }
                 }
 
                 // 鼠标悬停暂停自动轮播
                 MouseArea {
-                    anchors.fill: parent
+                    anchors.fill: carouselContainer
                     hoverEnabled: true
-                    onEntered: autoTimer.stop()
-                    onExited: autoTimer.start()
+                    onEntered:
+                    {
+                        leftArrow.visible = true;
+                        rightArrow.visible = true;
+                        autoTimer.stop()
+                    }
+                    onExited:
+                    {
+                        leftArrow.visible = false;
+                        rightArrow.visible = false;
+                        autoTimer.start()
+                    }
                 }
             }
-
         }
     }
 }

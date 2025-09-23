@@ -13,7 +13,7 @@ QtObject
     property color finishedLyricsDownColor: "#f3b3b1"; //已播放歌词的下渐变颜色
     property color finishedLyricsBorderColor: "#ffff91";//已播放歌词的边框颜色
     property color unFinishedLyricsUpColor: "white"; //未播放歌词的上渐变颜色
-    property color unFinishedLyricsDownColor: "#ddd"; //未播放歌词的下渐变颜色
+    property color unFinishedLyricsDownColor: "white"; //未播放歌词的下渐变颜色
     property color unFinishedLyricsBorderColor: "white"; //未播放歌词的边框颜色
 
     property color backgroundColor: "#00000040" // 背景色
