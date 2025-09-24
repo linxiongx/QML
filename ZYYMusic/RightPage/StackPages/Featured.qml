@@ -158,7 +158,7 @@ Item {
                 MouseArea {
                     id: rightArrow
                     visible:false;
-                    // anchors.right: parent.right
+                    anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     width: 40
                     height: 40
@@ -188,8 +188,8 @@ Item {
 
                 // 底部指示器
                 Row {
-                    // anchors.bottom: parent.bottom
-                    // anchors.bottomMargin: 10
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 10
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 8
                     z: 3
@@ -354,230 +354,232 @@ Item {
             }
 
 
-            // 最新音乐
-           Item
-           {
-               width: parent.width;
-               height: idLastestMusicText.implicitHeight + idMusicGrid.implicitHeight + 10; // 间距
+            // 最新音乐部分的修复版本
+            Item {
+                width: parent.width
+                height: idLastestMusicText.implicitHeight + idMusicGrid.height + 10
 
-               // 最新音乐文本
-               Text {
-                   id: idLastestMusicText
-                   anchors.left: parent.left
-                   anchors.leftMargin: 0
-                   anchors.top: parent.top
-                   anchors.topMargin: 0
-                   text: "最新音乐>"
-                   font.pixelSize: 18
-                   font.bold: true
-                   color: "white"
-               }
+                // 最新音乐文本
+                Text {
+                    id: idLastestMusicText
+                    anchors.left: parent.left
+                    anchors.leftMargin: 0
+                    anchors.top: parent.top
+                    anchors.topMargin: 0
+                    text: "最新音乐>"
+                    font.pixelSize: 18
+                    font.bold: true
+                    color: "white"
+                }
 
-               // 6个最新音乐元素 (3x2 Grid)
-               GridLayout {
-                   id: idMusicGrid
-                   anchors.left: parent.left
-                   // anchors.right: parent.right
-                   anchors.top: idLastestMusicText.bottom
-                   anchors.topMargin: 10
-                   columns: 2
-                   rows: 3;
-                   rowSpacing: 15
-                   columnSpacing: 20
-                   flow: GridLayout.LeftToRight
-                   // Layout.minimumHeight: 60 * 3 + 15  // 自动计算高度
-                   Layout.fillWidth: true
-                   Layout.fillHeight: true
+                // 6个最新音乐元素 (3x2 Grid)
+                GridLayout {
+                    id: idMusicGrid
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: idLastestMusicText.bottom
+                    anchors.topMargin: 10
+                    columns: 2
+                    rows: 3
+                    rowSpacing: 15
+                    columnSpacing: 20
 
-                   Repeater {
-                       model: root.songData
-                       delegate: RowLayout {
-                           id: songRow
-                           Layout.fillWidth: true
-                           Layout.fillHeight: true
+                    Repeater {
+                        model: root.songData
+                        delegate: Item {
+                            id: songItem
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 100
+                            Layout.minimumHeight: 100
 
-                           // 背景选中状态
-                           Rectangle {
-                               id: backgroundRect
-                               Layout.fillWidth: true
-                               Layout.fillHeight: true
-                               color: "#80000000"
-                               radius: 8
-                               border.color: "#eb4d44"
-                               border.width: 0
-                               opacity: 0
-                               z: 0
-                           }
+                            // 悬停状态管理
+                            property bool isHovered: false
 
-                           // 左侧图片和播放按钮
-                           Item {
-                               width: 100
-                               height: 100
-                               Layout.alignment: Qt.AlignVCenter
+                            // 背景选中状态
+                            Rectangle {
+                                id: backgroundRect
+                                anchors.fill: parent
+                                anchors.margins: 5
+                                color: songItem.isHovered ? "#80000000" : "transparent"
+                                radius: 8
+                                border.color: "#eb4d44"
+                                border.width: songItem.isHovered ? 2 : 0
 
-                               Image {
-                                   anchors.fill: parent
-                                   source: modelData.image
-                                   fillMode: Image.PreserveAspectCrop
-                                   clip: true
-                               }
+                                Behavior on color {
+                                    ColorAnimation { duration: 200 }
+                                }
+                                Behavior on border.width {
+                                    NumberAnimation { duration: 200 }
+                                }
+                            }
 
-                               // 播放按钮叠加层
-                               Rectangle {
-                                   id: playButton
-                                   anchors.centerIn: parent
-                                   width: 40
-                                   height: 40
-                                   radius: 20
-                                   color: "#80000000"
-                                   visible: false
-                                   opacity: 0
-                                   z: 15
+                            Row {
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 15
 
-                                   MouseArea {
-                                       anchors.fill: parent
-                                       z: 16
-                                       onClicked: {
-                                           console.log("播放: " + modelData.name)
-                                           mouse.accepted = true
-                                       }
-                                   }
+                                // 左侧图片和播放按钮
+                                Item {
+                                    width: 80
+                                    height: 80
+                                    anchors.verticalCenter: parent.verticalCenter
 
-                                   Text {
-                                       anchors.centerIn: parent
-                                       text: "▶"
-                                       color: "white"
-                                       font.pixelSize: 20
-                                       font.bold: true
-                                   }
+                                    Image {
+                                        id: albumImage
+                                        anchors.fill: parent
+                                        source: modelData.image
+                                        fillMode: Image.PreserveAspectCrop
+                                        clip: true
+                                    }
 
-                                   Behavior on opacity { NumberAnimation { duration: 200 } }
-                               }
-                           }
+                                    // 播放按钮叠加层
+                                    Rectangle {
+                                        id: playButton
+                                        anchors.centerIn: parent
+                                        width: 30
+                                        height: 30
+                                        radius: 15
+                                        color: "#80000000"
+                                        opacity: songItem.isHovered ? 0.9 : 0
+                                        visible: opacity > 0
 
-                           // 右侧文本和图标
-                           Column {
-                               Layout.fillWidth: true
-                               Layout.minimumWidth: 250
-                               Layout.alignment: Qt.AlignVCenter
-                               spacing: 6
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "▶"
+                                            color: "white"
+                                            font.pixelSize: 14
+                                            font.bold: true
+                                        }
 
-                               // 歌曲名称 (右上)
-                               Text {
-                                   text: modelData.name
-                                   color: "white"
-                                   font.pixelSize: 18
-                                   font.bold: true
-                                   wrapMode: Text.WordWrap
-                                   maximumLineCount: 2
-                                   width: parent.width
-                               }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                console.log("播放: " + modelData.name)
+                                            }
+                                        }
 
-                               // 歌手名字 (右下)
-                               Text {
-                                   text: modelData.artist
-                                   color: "white"
-                                   font.pixelSize: 14
-                                   opacity: 0.8
-                                   wrapMode: Text.WordWrap
-                                   maximumLineCount: 1
-                                   width: parent.width
-                               }
+                                        Behavior on opacity {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
 
-                               // 图标行
-                               Row {
-                                   id: iconRow
-                                   spacing: 15
-                                   Layout.alignment: Qt.AlignRight | Qt.AlignBottom
-                                   visible: false
-                                   opacity: 0
-                                   z: 17
-                                   Layout.bottomMargin: 10
+                                // 右侧文本和图标
+                                Column {
+                                    width: parent.width - 95 - 150  // 减去图片宽度和间距
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 8
 
-                                   // 下载图标
-                                   MouseArea {
-                                       width: 24
-                                       height: 24
-                                       onClicked: console.log("下载: " + modelData.name)
+                                    // 歌曲名称
+                                    Text {
+                                        text: modelData.name
+                                        color: "white"
+                                        font.pixelSize: 16
+                                        font.bold: true
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
 
-                                       Text {
-                                           anchors.centerIn: parent
-                                           text: "↓"
-                                           color: "white"
-                                           font.pixelSize: 16
-                                       }
-                                   }
+                                    // 歌手名字
+                                    Text {
+                                        text: modelData.artist
+                                        color: "#cccccc"
+                                        font.pixelSize: 14
+                                        width: parent.width
+                                        elide: Text.ElideRight
+                                    }
 
-                                   // 收藏图标
-                                   MouseArea {
-                                       width: 24
-                                       height: 24
-                                       onClicked: console.log("收藏: " + modelData.name)
+                              }
 
-                                       Text {
-                                           anchors.centerIn: parent
-                                           text: "♥"
-                                           color: "white"
-                                           font.pixelSize: 16
-                                       }
-                                   }
+                                // 图标行
+                                Row {
+                                    id: iconRow
+                                    spacing: 20
+                                    //anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter;
+                                    opacity: songItem.isHovered ? 1 : 0
+                                    visible: opacity > 0
 
-                                   // 更多图标
-                                   MouseArea {
-                                       width: 24
-                                       height: 24
-                                       onClicked: console.log("更多: " + modelData.name)
+                                    // 下载图标
+                                    MouseArea {
+                                        width: 20
+                                        height: 20
+                                        onClicked: {
+                                            console.log("下载: " + modelData.name)
+                                        }
 
-                                       Text {
-                                           anchors.centerIn: parent
-                                           text: "⋯"
-                                           color: "white"
-                                           font.pixelSize: 16
-                                       }
-                                   }
-                               }
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "⬇"
+                                            color: "#cccccc"
+                                            font.pixelSize: 14
+                                        }
+                                    }
 
-                               Behavior on opacity { NumberAnimation { duration: 200 } }
-                               }
+                                    // 收藏图标
+                                    MouseArea {
+                                        width: 20
+                                        height: 20
+                                        onClicked: {
+                                            console.log("收藏: " + modelData.name)
+                                        }
 
-                               // Hover 效果覆盖层
-                               Item {
-                                   id: hoverOverlay
-                                   Layout.fillWidth: true
-                                   Layout.fillHeight: true
-                                   z: 18
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "♥"
+                                            color: "#cccccc"
+                                            font.pixelSize: 16
+                                        }
+                                    }
 
-                                   MouseArea {
-                                       anchors.fill: parent
-                                       hoverEnabled: true
-                                       propagateComposedEvents: true
-                                       acceptedButtons: Qt.NoButton
-                                       cursorShape: Qt.PointingHandCursor
-                                       onEntered: {
-                                           console.log("Hover entered: " + modelData.name)
-                                           backgroundRect.border.width = 2
-                                           backgroundRect.opacity = 0.5
-                                           playButton.visible = true
-                                           playButton.opacity = 0.8
-                                           iconRow.visible = true
-                                           iconRow.opacity = 1
-                                       }
-                                       onExited: {
-                                           console.log("Hover exited: " + modelData.name)
-                                           backgroundRect.border.width = 0
-                                           backgroundRect.opacity = 0
-                                           playButton.visible = false
-                                           playButton.opacity = 0
-                                           iconRow.visible = false
-                                           iconRow.opacity = 0
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                   }
-               }
-           }
-       }
+                                    // 更多图标
+                                    MouseArea {
+                                        width: 20
+                                        height: 20
+                                        onClicked: {
+                                            console.log("更多: " + modelData.name)
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "⋯"
+                                            color: "#cccccc"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                        }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation { duration: 200 }
+                                    }
+                                }
+
+                            }
+
+                            // 主悬停区域 - 放在最上层
+                            MouseArea {
+                                id: hoverArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+
+                                onEntered: {
+                                    songItem.isHovered = true
+                                }
+
+                                onExited: {
+                                    songItem.isHovered = false
+                                }
+
+                                onClicked: {
+                                    console.log("点击歌曲: " + modelData.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        }
     }
-
+}
