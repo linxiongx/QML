@@ -10,7 +10,7 @@ Item
     Item
     {
         anchors.fill: parent;
-        anchors.topMargin: 24;
+        anchors.topMargin: 20;
         anchors.leftMargin: 24;
 
         Flow
@@ -18,7 +18,7 @@ Item
             id: idMusicTabsFlow;
             anchors.left:  parent.left;
             anchors.top: parent.top;
-            anchors.topMargin: 25;
+            anchors.topMargin: 15;
             height: 25;
             spacing: 20;
             Repeater
@@ -113,7 +113,7 @@ Item
             anchors.left: parent.left;
             anchors.right: parent.right;
             anchors.top: idCutLine.bottom;
-            anchors.topMargin: 10;
+            anchors.topMargin: 0;
             anchors.bottom: parent.bottom;
 
             // 精选 tab

@@ -28,5 +28,9 @@
         <file>Res/PlayMusic/Image/5.jpg</file>
         <file>Res/PlayMusic/Image/6.jpg</file>
         <file>Res/PlayMusic/Image/7.jpg</file>
+        <file>Res/PlayMusic/Image/8.png</file>
+        <file>Res/PlayMusic/Image/9.png</file>
+        <file>Res/PlayMusic/Image/10.png</file>
+        <file>Res/PlayMusic/Image/11.png</file>
     </qresource>
 </RCC>

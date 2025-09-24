@@ -44,13 +44,13 @@ ZYYMusic is a Qt Quick desktop music player with declarative QML UI and minimal 
 
 - **Configuration**: `Basic/BasicConfig.qml` singleton manages global settings, including readonly properties for text colors and fonts, dynamic color schemes for finished/unfinished lyrics (with gradients and borders), background color, and signals for UI events like opening login popups.
 
-- **Resources**: `res.qrc` bundles assets under the `/Image` prefix from `Res/`, including UI icons (close, mirror, search, etc.), login assets (QR code, flags, eye icons, social logins like QQ, NetEase, Weibo, WeChat), and playback images (album covers as JPGs).
+- **Resources**: `res.qrc` bundles assets under the `/Image` prefix from `Res/`, including UI icons (close, mirror, search, etc.), login assets (QR code, flags, eye icons, social logins like QQ, NetEase, Weibo, WeChat), and playback images (album covers as JPGs and PNGs).
 
 All QML files are explicitly listed and registered in `CMakeLists.txt` for the executable `appZYYMusic`. No custom C++ classes beyond the basic application setup; UI and logic are primarily QML-based, emphasizing music search, cloud music integration (e.g., NetEase), playback controls, comprehensive settings (including desktop lyrics and shortcuts), and user authentication.
 
 ## Recent Changes
 
-Recent git status indicates additions like images in Res/PlayMusic/Image/ (1.jpg to 7.jpg, likely album covers), modifications to Setting.qml, DesktopLyrics.qml, CloudMusic.qml, and new/untracked stack pages (Featured.qml, PlaylistSquare.qml, Rankings.qml, Artists.qml) for cloud music tabs. These expand online music discovery but remain as basic loaders without full logic.
+Recent git status indicates additions of images 8.png to 11.png in Res/PlayMusic/Image/ (likely additional album covers), modifications to RightPage/StackPages/CloudMusic.qml, RightPage/StackPages/Featured.qml, and res.qrc (to include the new images). These continue to expand the cloud music features with more playback assets and updates to UI pages, but remain as basic loaders without full logic.
 
 ## From README.md
 
