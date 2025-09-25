@@ -31,12 +31,12 @@ ZYYMusic is a Qt Quick desktop music player with declarative QML UI and minimal 
 
 - **Core UI**:
   - `Main.qml`: Root using `ZYYWindow` (a custom window component), with left navigation `LeftPage.qml`, right dynamic content `RightPage.qml` including title `TitlePage.qml` and minimize/maximize `MinMax.qml`, bottom player `PlayMusic.qml` (height 100), and centered login popups from `mainPopups/` connected to `BasicConfig` signals.
-  - `RightPage.qml`: Contains `TitlePage` at the top (height 60) and a `StackView` for dynamic pages, with initial item `CloudMusic.qml` for online music display; the StackView has a bottom margin of 100 to accommodate the player. Supported pages include `Search.qml`, `CloudMusic.qml`, `OthersPage.qml`, `Setting.qml` (with subpages: `Play.qml`, `SystemConfig.qml`, `SoundAndDownload.qml`, `ShortCut.qml`, `Counter.qml`, `Standard.qml`, `MessagingPrivacy.qml`, `DesktopLyrics.qml`), and additional stack pages like `Featured.qml`, `PlaylistSquare.qml`, `Rankings.qml`, `Artists.qml`.
-  - `CloudMusic.qml`: Implements tabs ("精选", "歌单广场", "排行榜", "歌手") using Flow and StackLayout with Loaders for the above additional pages, suggesting a cloud music hub (e.g., NetEase integration).
+  - `RightPage.qml`: Contains `TitlePage` at the top (height 60) and a `StackView` for dynamic pages, with initial item `CloudMusic.qml` for online music display; the StackView has a bottom margin of 100 to accommodate the player. Supported pages include `Search.qml`, `CloudMusic.qml`, `OthersPage.qml`, `Setting.qml` (with subpages: `Play.qml`, `SystemConfig.qml`, `SoundAndDownload.qml`, `ShortCut.qml`, `Counter.qml`, `Standard.qml`, `MessagingPrivacy.qml`, `DesktopLyrics.qml`), and additional stack pages like `Featured.qml`, `PlaylistSquare.qml`, `Rankings.qml`, `Artists.qml`. Note: Some pages like `RightPage.qml` and `CloudMusic.qml` are currently minimal placeholders.
+  - `CloudMusic.qml`: Implements tabs ("精选", "歌单广场", "排行榜", "歌手") using Flow and StackLayout with Loaders for the above additional pages, suggesting a cloud music hub (e.g., NetEase integration). All QML files are explicitly registered in `CMakeLists.txt` under `qt_add_qml_module`.
 
-- **Playback**: `PlayMusic/PlayMusic.qml` provides bottom controls and display for music playback, positioned at the bottom of the main window. Currently minimal (basic Rectangle); actual playback logic likely requires QtMultimedia integration or C++ backend for audio handling, playlist management, and progress controls. No current implementation for play/pause/seek or media sources.
+- **Playback**: `PlayMusic/PlayMusic.qml` provides bottom controls and display for music playback, positioned at the bottom of the main window (currently a basic Rectangle; requires QtMultimedia integration for actual audio handling, playlist management, and controls).
 
-- **Cloud Integration**: Cloud music features centered on `CloudMusic.qml` tabs, implying NetEase Cloud Music API usage (based on res.qrc icons for NetEase, QQ Music, etc.). Pages like Featured.qml (recommendations), PlaylistSquare.qml (playlists), Rankings.qml (charts), Artists.qml (singers) are placeholders/loaders. Integration would involve network requests for search, authentication (via login popups), and data binding to UI lists. No API endpoints or HTTP clients visible in current QML; potential future expansion with QtNetwork or C++.
+- **Cloud Integration**: Cloud music features centered on `CloudMusic.qml` tabs, implying NetEase Cloud Music API usage (based on res.qrc icons for NetEase, QQ Music, etc.). `Featured.qml` (recommendations) includes a carousel banner (`SubFeatured/Carousel.qml` with auto-scrolling images, navigation arrows on hover, and bottom indicators), official playlists section (`SubFeatured/OfficialPlaylist.qml` with row of 4 hoverable image cards displaying playlist name, description, and play button overlay), latest music grid (`SubFeatured/LatestMusic.qml` with 3x2 layout for songs featuring album art, titles, artists, hover background with play button, and icons for download/favorite/more), and a similar section for popular podcasts. `PlaylistSquare.qml` (playlists), `Rankings.qml` (charts), `Artists.qml` (singers) are placeholders/loaders. Integration would involve network requests for search, authentication (via login popups), and data binding to UI lists. No API endpoints or HTTP clients visible in current QML; potential future expansion with QtNetwork or C++.
 
 - **Reusable Components**: `CommonUI/` includes custom controls such as `ZYYWindow.qml` (custom window), `ZYYSearchBox.qml`, `ZYYComboBox.qml`, `ZYYRadioButton.qml`, `ZYYCheckBox.qml`, `ZYYShotcutTextField.qml`, `TextFiledCtrl.qml`, and `ZYYDowloadFolderDialog.qml` for download folder selection.
 
@@ -50,7 +50,25 @@ All QML files are explicitly listed and registered in `CMakeLists.txt` for the e
 
 ## Recent Changes
 
-Recent git status indicates additions of images 8.png to 11.png in Res/PlayMusic/Image/ (likely additional album covers), modifications to RightPage/StackPages/CloudMusic.qml, RightPage/StackPages/Featured.qml, and res.qrc (to include the new images). These continue to expand the cloud music features with more playback assets and updates to UI pages, but remain as basic loaders without full logic.
+Current branch: main (ahead of origin/main by 2 commits).
+
+Status:
+- Modified: CLAUDE.md, CMakeLists.txt, CMakeLists.txt.user, RequirementsDocument.txt, RightPage/StackPages/Featured.qml, RightPage/StackPages/PlaylistSquare.qml
+- Added: RightPage/StackPages/SubFeatured/Carousel.qml, LatestMusic.qml, OfficialPlaylist.qml
+- Deleted: aaa.txt, test.txt
+- Untracked: "RightPage/StackPages/SubFeatured/LatestMusic - 副本.qml"
+
+Recent commits:
+d998cc5 最新音乐完成网格布局，剩下左右箭头切换
+0eed1de 歌单广场已完成，开始最新音乐
+c2d2c8d x
+2d6095c [AI]完成设置-桌面歌词-配色方案。2.音乐页面增加轮播功能
+2fc53c3 save modify
+c21da2c 增加和完善了设置-桌面歌词模块
+ec7af6b Merge branch 'main' of github.com:linxiongx/QML
+1f0886b modify ImageViewer
+c26d180 Update readme.md
+208fd77 Rename readme to readme.md
 
 ## From README.md
 

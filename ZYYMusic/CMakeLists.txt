@@ -54,6 +54,7 @@ qt_add_qml_module(appZYYMusic
         QML_FILES RightPage/StackPages/PlaylistSquare.qml
         QML_FILES RightPage/StackPages/Rankings.qml
         QML_FILES RightPage/StackPages/Artists.qml
+        QML_FILES RightPage/StackPages/SubFeatured/Carousel.qml RightPage/StackPages/SubFeatured/LatestMusic.qml RightPage/StackPages/SubFeatured/OfficialPlaylist.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
