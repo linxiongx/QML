@@ -42,19 +42,19 @@ Item
             anchors.centerIn: parent;
             color: "white";
         }
-        MouseArea
-        {
+        MouseArea {
             anchors.fill: parent;
             hoverEnabled: true;
-            onEntered:
-            {
+            onEntered: {
                 parent.opacity = 0.8;
                 cursorShape = Qt.PointingHandCursor;
             }
-            onExited:
-            {
+            onExited: {
                 parent.opacity = 1;
                 cursorShape = Qt.ArrowCursor;
+            }
+            onClicked: {
+                BasicConfig.openLoginPopup();  // 弹出登录窗口
             }
         }
     }
