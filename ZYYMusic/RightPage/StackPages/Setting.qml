@@ -104,16 +104,16 @@ Item
                             // 滚动到对应 section
                             var targetY = 0;
                             switch(index) {
-                                case 0: targetY = accountSection.y - 30; break;
-                                case 1: targetY = generalSection.y - 30; break;
-                                case 2: targetY = systemSection.y - 30; break;
-                                case 3: targetY = playSection.y - 30; break;
-                                case 4: targetY = messagingSection.y - 30; break;
-                                case 5: targetY = shortcutSection.y - 30; break;
-                                case 6: targetY = soundSection.y - 30; break;
-                                case 7: targetY = desktopSection.y - 30; break;
-                                case 8: targetY = toolSection.y - 30; break;
-                                case 9: targetY = aboutSection.y - 30; break;
+                            case 0: targetY = accountSection.y; break;
+                            case 1: targetY = generalSection.y; break;
+                            case 2: targetY = systemSection.y; break;
+                            case 3: targetY = playSection.y; break;
+                            case 4: targetY = messagingSection.y; break;
+                            case 5: targetY = shortcutSection.y; break;
+                            case 6: targetY = soundSection.y; break;
+                            case 7: targetY = desktopSection.y; break;
+                            case 8: targetY = toolSection.y; break;
+                            case 9: targetY = aboutSection.y; break;
                             }
                             idFlick.contentY = Math.max(0, targetY);
                         }
@@ -130,7 +130,7 @@ Item
             anchors.right: parent.right;
             anchors.top: idSettingsTitleFlow.bottom;
             anchors.topMargin: 20;
-           // anchors.rightMargin: window.width:
+            // anchors.rightMargin: window.width:
             height: 1;
             color: "#212127"
         }
@@ -318,25 +318,23 @@ Item
                     id: desktopSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
-                    height: 800;
+                    height: 550;
                 }
 
-                // 工具占位
-                Item {
+                //分割线
+                Rectangle
+                {
+                    anchors.left: parent.left;
+                    anchors.right: parent.right;
+                    height: 1;
+                    color: "#212127"
+                }
+
+
+                Tool {
                     id: toolSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
-                    height: 400;
-                    Rectangle {
-                        anchors.fill: parent;
-                        color: "transparent";
-                        Text {
-                            anchors.centerIn: parent;
-                            text: "工具设置（待实现）";
-                            color: "white";
-                            font.pixelSize: 20;
-                        }
-                    }
                 }
 
                 // 分割线
@@ -347,27 +345,17 @@ Item
                     color: "#212127";
                 }
 
-                // 关于网易云音乐占位
-                Item {
+                About {
                     id: aboutSection
                     anchors.left: parent.left;
                     anchors.right: parent.right;
-                    height: 400;
-                    Rectangle {
-                        anchors.fill: parent;
-                        color: "transparent";
-                        Text {
-                            anchors.centerIn: parent;
-                            text: "关于网易云音乐（待实现）";
-                            color: "white";
-                            font.pixelSize: 20;
-                        }
-                    }
                 }
-
-              }
+            }
         }
+
     }
 }
+
+
 
 
