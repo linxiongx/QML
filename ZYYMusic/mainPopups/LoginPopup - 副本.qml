@@ -9,8 +9,9 @@ Popup
     anchors.centerIn: parent;
     clip: true;
     closePolicy: Popup.NoAutoClose;
-    onOpened: {
-        animationContainer.state = "showQR";  // 默认显示二维码，自动优化动画
+    onOpened:
+    {
+        idShowAnimation.start();
     }
     background: Rectangle
     {
@@ -142,32 +143,35 @@ Popup
             }
         }
 
-        Label {
-            id: otherLoginLabel;
+        Label
+        {
             anchors.bottom: parent.bottom;
             anchors.bottomMargin: 30;
             anchors.horizontalCenter: parent.horizontalCenter;
             font.pixelSize: 20;
-            font.family: "微软雅黑 Light";
-            color: "#75777f";
+            font.family: "微软雅黑 Light"
+            color: "#75777f"
 
             text: "其它方式登陆 >"
 
-            MouseArea {
+            MouseArea
+            {
                 anchors.fill: parent;
                 hoverEnabled: true;
-                onEntered: {
+                onEntered:
+                {
                     cursorShape = Qt.PointingHandCursor;
                 }
-                onExited: {
+                onExited:
+                {
                     cursorShape = Qt.ArrowCursor;
                 }
-                onClicked: {
+                onClicked:
+                {
                     idLoginPopup.close();
                     idLoginByOtherMainsPopup.open();
                 }
             }
         }
-        }
     }
-
+}

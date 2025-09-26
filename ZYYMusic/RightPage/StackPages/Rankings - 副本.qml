@@ -3,14 +3,6 @@ import QtQuick.Controls 2.15
 import "../../Basic"
 
 Item {
-    // 整体淡入动画
-    opacity: 0
-    NumberAnimation on opacity {
-        from: 0; to: 1
-        duration: 500
-        easing.type: Easing.OutCubic
-    }
-
     Flickable {
         id: flickable
         anchors.fill: parent
@@ -55,7 +47,7 @@ Item {
                 ListElement { rank: 7; song: "每一次的相遇"; artist: "齐秦"; album: "客家心"; duration: "04:20" },
                 ListElement { rank: 8; song: "千千阙歌"; artist: "陈慧娴"; album: "千千阙歌"; duration: "04:08" },
                 ListElement { rank: 9; song: "容易受伤的女人"; artist: "张艾嘉"; album: "容易受伤的女人"; duration: "04:17" },
-                ListElement { rank: 10; song: "来生缘"; artist: "曾再庭"; album: "来生缘"; duration: "04:02" }
+                ListElement { rank: 10; song: "来生缘"; artist: "曾冠廷"; album: "来生缘"; duration: "04:02" }
             ] }
             ListElement { name: "摇滚榜"; desc: "摇滚经典"; image: "qrc:/Image/Res/PlayMusic/Image/10.png"; songs: [
                 ListElement { rank: 1; song: "一无所有"; artist: "崔健"; album: "新长征路上的摇滚"; duration: "04:25" },
@@ -130,9 +122,10 @@ Item {
                 delegate: Item {
                     id: cardItem
                     width: 220
-                    height: 300
+                    height: card.height
                     property int currentIndex: index
                     property bool hovered: false
+                    property bool keepExpanded: false
 
                     // 动态调整contentHeight
                     onHeightChanged: {
@@ -141,45 +134,61 @@ Item {
 
                     Rectangle {
                         id: card
-                        anchors.fill: parent
+                        width: 220; height: 300
                         color: BasicConfig.backgroundColor
                         radius: 10
-                        border.color: "gray"
-                        border.width: 1
+                        border.color: "gray"; border.width: 1
 
                         // 封面图片
                         Image {
                             id: cardImage
                             anchors.top: parent.top
-                            anchors.topMargin: 5
+                            anchors.topMargin: 5;
                             anchors.horizontalCenter: parent.horizontalCenter
-                            width: 200
-                            height: 200
+                            width: 200; height: 200
                             source: model.image || ""
                             fillMode: Image.PreserveAspectCrop
                         }
 
-                        // 名称
+                        // 延迟隐藏定时器
+                        Timer {
+                            id: hideTimer
+                            interval: 500  // 500ms延迟，给用户足够时间
+                            onTriggered: {
+                                cardItem.keepExpanded = false;
+                            }
+                        }
+                    }
+
+                    // 卡片鼠标控制
+                    MouseArea {
+                        id: cardMouseArea
+                        anchors.fill: card
+                        z: 10
+                        hoverEnabled: true
+                        propagateComposedEvents: true
+
+                        onEntered: cardItem.hovered = true
+                        onExited: cardItem.hovered = false
+
+                        // 名称和描述
                         Text {
                             id: nameText
-                            anchors.top: cardImage.bottom
-                            anchors.left: parent.left
-                            anchors.right: parent.right
+                            anchors.top: card.top
+                            anchors.topMargin: 215
+                            anchors.left: card.left; anchors.right: card.right
                             anchors.margins: 10
                             text: model.name || ""
                             color: "#d9d9da"
-                            font.bold: true
-                            font.pixelSize: 14
+                            font.bold: true; font.pixelSize: 14
                             wrapMode: Text.WordWrap
                             horizontalAlignment: Text.AlignHCenter
                         }
 
-                        // 描述
                         Text {
                             id: descText
                             anchors.top: nameText.bottom
-                            anchors.left: parent.left
-                            anchors.right: parent.right
+                            anchors.left: card.left; anchors.right: card.right
                             anchors.margins: 10
                             anchors.topMargin: 5
                             text: model.desc || ""
@@ -188,101 +197,133 @@ Item {
                             wrapMode: Text.WordWrap
                             horizontalAlignment: Text.AlignHCenter
                         }
+                    }
 
-                        // 悬停遮罩层
-                        Rectangle {
-                            id: hoverOverlay
-                            anchors.fill: parent
-                            radius: 10
-                            color: cardItem.hovered ? Qt.rgba(0, 0, 0, 0.3) : "transparent"
+                    // 歌曲子列表（hover显示）
+                    Column {
+                        id: songsColumn
+                        width: 220
+                        clip: true
+                        visible: cardItem.hovered || cardItem.keepExpanded
+                        height: visible ? childrenRect.height : 0
+                        opacity: visible ? 1 : 0
+                        spacing: 5
 
-                            Behavior on color {
-                                ColorAnimation { duration: 200 }
-                            }
+                        Behavior on height {
+                            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on opacity {
+                            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+                        }
 
-                            // 播放按钮
-                            Image {
-                                anchors.centerIn: parent
-                                width: 50
-                                height: 50
-                                source: "qrc:/Image/Res/PlayMusic/Image/play.png"
-                                visible: cardItem.hovered
-                                opacity: 0.9
-
-                                Behavior on opacity {
-                                    NumberAnimation { duration: 200 }
+                        Repeater {
+                            model: {
+                                // 安全访问歌曲数据
+                                if (rankingsModel &&
+                                    currentIndex >= 0 &&
+                                    currentIndex < rankingsModel.count) {
+                                    var item = rankingsModel.get(currentIndex);
+                                    return item && item.songs ? item.songs : null;
                                 }
+                                return null;
                             }
 
-                            // Tooltip 前3首歌
-                            Rectangle {
-                                id: tooltip
-                                anchors.top: parent.top
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.topMargin: 10
-                                width: 200
-                                height: 100
-                                visible: cardItem.hovered
-                                color: Qt.rgba(0, 0, 0, 0.9)
-                                radius: 8
+                            delegate: Rectangle {
+                                width: parent.width; height: 40
+                                color: "lightgray"
+                                radius: 5
 
-                                Column {
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    spacing: 2
-
-                                    Repeater {
-                                        model: {
-                                            if (rankingsModel && cardItem.currentIndex >= 0 && cardItem.currentIndex < rankingsModel.count) {
-                                                var item = rankingsModel.get(cardItem.currentIndex);
-                                                if (item && item.songs) {
-                                                    var topSongs = [];
-                                                    var maxCount = Math.min(3, item.songs.count);
-                                                    for (var i = 0; i < maxCount; i++) {
-                                                        topSongs.push(item.songs.get(i));
-                                                    }
-                                                    return topSongs;
-                                                }
-                                            }
-                                            return [];
+                                Text {
+                                    id: rankText;
+                                    anchors.left: parent.left;
+                                    anchors.margins: 5
+                                    anchors.verticalCenter: parent.verticalCenter;
+                                    text: (model && model.rank) ? model.rank.toString() : "";
+                                    font.bold: true;
+                                    color: (model && model.rank && model.rank <= 3) ? "red" : "blue"
+                                    width: 30
+                                }
+                                Text {
+                                    anchors.left: rankText.right;
+                                    anchors.verticalCenter: parent.verticalCenter;
+                                    text: {
+                                        if (model && model.song && model.artist) {
+                                            return model.song + " - " + model.artist;
                                         }
+                                        return "";
+                                    }
+                                    font.pixelSize: 12;
+                                    width: 150;
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    anchors.right: parent.right;
+                                    anchors.verticalCenter: parent.verticalCenter;
+                                    anchors.rightMargin: 10;
+                                    text: (model && model.duration) ? model.duration : "";
+                                    font.pixelSize: 10;
+                                    color: "gray"
+                                }
 
-                                        delegate: Text {
-                                            width: parent.width
-                                            text: modelData ? ("#" + modelData.rank + " " + modelData.song + " - " + modelData.artist) : ""
-                                            color: "white"
-                                            font.pixelSize: 11
-                                            elide: Text.ElideRight
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        if (model && model.song) {
+                                            console.log("播放歌曲: " + model.song);
                                         }
                                     }
                                 }
-
-                                Behavior on opacity {
-                                    NumberAnimation { duration: 200 }
-                                }
                             }
                         }
+                    }
+                    }
 
-                        // 鼠标控制
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
+                    // 右侧歌曲列表的鼠标控制（保持显示）
+                    MouseArea {
+                        anchors.fill: songsColumn
+                        z: 21
+                        hoverEnabled: true
+                        propagateComposedEvents: true
+                        visible: songsColumn.visible
 
-                            onEntered: cardItem.hovered = true
-                            onExited: cardItem.hovered = false
+                        onEntered: cardItem.hovered = true
+                        onExited: cardItem.hovered = false
+                    }
 
-                            // 点击事件
-                            onClicked: {
-                                var stackView = cardItem.parent.parent.parent.idMainStackView;
-                                if (stackView && rankingsModel && cardItem.currentIndex >= 0 && cardItem.currentIndex < rankingsModel.count) {
-                                    var detail = rankingsModel.get(cardItem.currentIndex);
-                                    stackView.push("qrc:/qt/qml/ZYYMusic/RightPage/StackPages/RankDetail.qml", {detailModel: detail});
-                                }
+                    // 卡片悬停覆盖层（只在卡片区域显示）
+                    Rectangle {
+                        id: overlay
+                        anchors.fill: card
+                        z: 5
+                        color: cardItem.hovered ? Qt.rgba(0,0,0,0.3) : "transparent"
+                        radius: 10
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200 }
+                        }
+
+                        // 播放按钮
+                        Image {
+                            anchors.centerIn: parent
+                            width: 50; height: 50
+                            source: "qrc:/Image/Res/PlayMusic/Image/play.png"
+                            visible: cardItem.hovered
+                            opacity: 0.9
+
+                            Behavior on opacity {
+                                NumberAnimation { duration: 200 }
                             }
                         }
                     }
                 }
             }
         }
+
+        // 整体淡入动画
+        NumberAnimation on opacity {
+            from: 0; to: 1
+            duration: 500
+            easing.type: Easing.OutCubic
+        }
     }
-}
+

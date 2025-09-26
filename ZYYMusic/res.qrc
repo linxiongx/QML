@@ -33,5 +33,18 @@
         <file>Res/PlayMusic/Image/10.png</file>
         <file>Res/PlayMusic/Image/11.png</file>
         <file>Res/PlayMusic/Image/wangyiyun.png</file>
+        <file>Res/PlayMusic/Image/play.png</file>
+        <file>Res/PlayMusic/Image/Comment.png</file>
+        <file>Res/PlayMusic/Image/Download.png</file>
+        <file>Res/PlayMusic/Image/Print.png</file>
+        <file>Res/PlayMusic/Image/Share.png</file>
+        <file>Res/PlayMusic/Image/back.png</file>
+        <file>Res/PlayMusic/Image/chexiao.png</file>
+        <file>Res/PlayMusic/Image/shoucang.png</file>
+        <file>Res/PlayMusic/Image/menu.png</file>
+        <file>Res/PlayMusic/Image/qun.png</file>
+        <file>Res/PlayMusic/Image/voice.png</file>
+        <file>Res/PlayMusic/Image/woniu.png</file>
+        <file>Res/PlayMusic/Image/add.png</file>
     </qresource>
 </RCC>
