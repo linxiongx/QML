@@ -11,24 +11,32 @@ Row
     spacing: 5;
 
     //后退
-    Rectangle
-    {
-        id: idBackforwardRect;
-        width: 20;
-        height: parent.height /2;
-        color: "transparent"
-        border.color: "#2b2b31";
-        border.width: 1;
-        radius: 4;
-        anchors.verticalCenter: parent.verticalCenter;
-        Text
-        {
-            text: "<";
-            anchors.centerIn: parent;
-            color: "#b0b2b8";
-            font.pointSize: 15;
-        }
+    Rectangle {
+    id: idBackforwardRect;
+    width: 20;
+    height: parent.height / 2;
+    color: "transparent"
+    border.color: "#2b2b31";
+    border.width: 1;
+    radius: 4;
+    anchors.verticalCenter: parent.verticalCenter;
+
+    Text {
+        id: idBackText;
+        text: "<";
+        anchors.centerIn: parent;
+        color: parentMouseArea.containsMouse ? "white" : "#b0b2b8";
+        font.pointSize: 15;
     }
+
+    MouseArea {
+        id: parentMouseArea;
+        anchors.fill: parent;
+        hoverEnabled: true;
+        cursorShape: containsMouse ? Qt.PointingHandCursor : Qt.ArrowCursor;
+        onClicked: idMainStackView.pop();  // 后退到上一页
+    }
+}
 
     //搜索框
     ZYYSearchBox

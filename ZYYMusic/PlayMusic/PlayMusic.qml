@@ -8,6 +8,8 @@ Rectangle {
     height: 100
     color: "#1e1e1e"  // 深色背景，更适合音乐播放器
 
+    property bool isPlaying: false;
+
     RowLayout {
         anchors.fill: parent
         anchors.margins: 10
@@ -48,12 +50,13 @@ Rectangle {
                     asynchronous: true
                     visible: false
 
-                    // 加载中指示
+                    // 加载指示 - 调整到 imageContainer 级别以覆盖
                     Rectangle {
-                        anchors.fill: parent
+                        anchors.fill: imageContainer
                         color: "#42424b"
-                        radius: parent.width / 2
+                        radius: imageContainer.width / 2
                         visible: albumImage.status !== Image.Ready
+                        z: 10
 
                         Text {
                             anchors.centerIn: parent
@@ -61,6 +64,14 @@ Rectangle {
                             color: "white"
                             font.pixelSize: 12
                         }
+                    }
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 20000
+                        loops: Animation.Infinite
+                        running: root.isPlaying
                     }
                 }
 
@@ -74,9 +85,18 @@ Rectangle {
                 }
 
                 OpacityMask {
+                    id: opacityMask
                     anchors.fill: imageContainer
                     source: albumImage
                     maskSource: mask
+
+                    RotationAnimation on rotation {
+                        from: 0
+                        to: 360
+                        duration: 20000
+                        loops: Animation.Infinite
+                        running: root.isPlaying
+                    }
                 }
             }
         }
@@ -168,50 +188,120 @@ Rectangle {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 15
 
-                Image {
-                    source: "qrc:/Image/Res/PlayMusic/Image/shoucang.png"
-                    sourceSize: Qt.size(16,16)
-                    width: 16
-                    height: 16
-                    fillMode: Image.Stretch
-                    smooth: false
+                MouseArea {
+                    width: 20
+                    height: 20
+                    hoverEnabled: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsMouse ? "#42424b" : "transparent"
+                        radius: 4
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/Image/Res/PlayMusic/Image/shoucang.png"
+                        sourceSize: Qt.size(16,16)
+                        width: 16
+                        height: 16
+                        fillMode: Image.Stretch
+                        smooth: false
+                    }
                 }
 
-                Image {
-                    source: "qrc:/Image/Res/PlayMusic/Image/back.png"
-                    sourceSize: Qt.size(16,16)
-                    width: 16
-                    height: 16
-                    fillMode: Image.Stretch
-                    smooth: false
+                MouseArea {
+                    width: 20
+                    height: 20
+                    hoverEnabled: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsMouse ? "#42424b" : "transparent"
+                        radius: 4
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/Image/Res/PlayMusic/Image/back.png"
+                        sourceSize: Qt.size(16,16)
+                        width: 16
+                        height: 16
+                        fillMode: Image.Stretch
+                        smooth: false
+                    }
                 }
 
-                Image {
-                    source: "qrc:/Image/Res/PlayMusic/Image/play.png"
-                    sourceSize: Qt.size(16,16)
-                    width: 16
-                    height: 16
-                    fillMode: Image.Stretch
-                    smooth: false
+                //播放按钮
+                MouseArea {
+                    width: 20
+                    height: 20
+                    hoverEnabled: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsMouse ? "#42424b" : "transparent"
+                        radius: 4
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/Image/Res/PlayMusic/Image/play.png"
+                        sourceSize: Qt.size(16,16)
+                        width: 16
+                        height: 16
+                        fillMode: Image.Stretch
+                        smooth: false
+                    }
+
+                    onClicked: {
+                        root.isPlaying = !root.isPlaying;
+                    }
                 }
 
-                Image {
-                    source: "qrc:/Image/Res/PlayMusic/Image/back.png"
-                    sourceSize: Qt.size(16,16)
-                    width: 16
-                    height: 16
-                    fillMode: Image.Stretch
-                    smooth: false
-                    rotation: 180;
+                MouseArea {
+                    width: 20
+                    height: 20
+                    hoverEnabled: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsMouse ? "#42424b" : "transparent"
+                        radius: 4
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/Image/Res/PlayMusic/Image/back.png"
+                        sourceSize: Qt.size(16,16)
+                        width: 16
+                        height: 16
+                        fillMode: Image.Stretch
+                        smooth: false
+                        rotation: 180;
+                    }
                 }
 
-                Image {
-                    source: "qrc:/Image/Res/PlayMusic/Image/chexiao.png"
-                    sourceSize: Qt.size(16,16)
-                    width: 16
-                    height: 16
-                    fillMode: Image.Stretch
-                    smooth: false
+                MouseArea {
+                    width: 20
+                    height: 20
+                    hoverEnabled: true
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsMouse ? "#42424b" : "transparent"
+                        radius: 4
+                    }
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "qrc:/Image/Res/PlayMusic/Image/chexiao.png"
+                        sourceSize: Qt.size(16,16)
+                        width: 16
+                        height: 16
+                        fillMode: Image.Stretch
+                        smooth: false
+                    }
                 }
             }
 

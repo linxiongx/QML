@@ -10,7 +10,7 @@ Popup
     clip: true;
     closePolicy: Popup.NoAutoClose;
     onOpened: {
-        animationContainer.state = "showQR";  // 默认显示二维码，自动优化动画
+        // animationContainer.state = "showQR";  // 默认显示二维码，自动优化动画
     }
     background: Rectangle
     {
@@ -92,12 +92,13 @@ Popup
             x: 20;
             y: 100;
             scale: 0.8;
+            opacity: 0;
             source: "qrc:/Image/Res/MainLogin/code.png"
         }
         ParallelAnimation
         {
             id: idShowAnimation;
-            property bool showFlag: true;
+            property bool showFlag: false;
             NumberAnimation
             {
                 target: idCode;

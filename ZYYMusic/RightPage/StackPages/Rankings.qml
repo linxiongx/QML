@@ -157,6 +157,11 @@ Item {
                             height: 200
                             source: model.image || ""
                             fillMode: Image.PreserveAspectCrop
+                            opacity: 1.0
+
+                            Behavior on opacity {
+                                NumberAnimation { duration: 200 }
+                            }
                         }
 
                         // 名称
@@ -214,17 +219,18 @@ Item {
                                 }
                             }
 
-                            // Tooltip 前3首歌
+                            // Tooltip 前首歌，限制在封面内
                             Rectangle {
                                 id: tooltip
                                 anchors.top: parent.top
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.topMargin: 10
-                                width: 200
-                                height: 100
+                                anchors.topMargin: 25
+                                width: 170
+                                height: 170
                                 visible: cardItem.hovered
-                                color: Qt.rgba(0, 0, 0, 0.9)
+                                color: "transparent"
                                 radius: 8
+                                clip: true
 
                                 Column {
                                     anchors.fill: parent
@@ -236,8 +242,11 @@ Item {
                                             if (rankingsModel && cardItem.currentIndex >= 0 && cardItem.currentIndex < rankingsModel.count) {
                                                 var item = rankingsModel.get(cardItem.currentIndex);
                                                 if (item && item.songs) {
+                                                    var availableHeight = cardImage.height - 40;  // 减去边距
+                                                    var songHeight = 18;  // 每首歌高度估算
+                                                    var maxCount = Math.floor(availableHeight / songHeight);
+                                                    maxCount = Math.min(maxCount, item.songs.count);
                                                     var topSongs = [];
-                                                    var maxCount = Math.min(3, item.songs.count);
                                                     for (var i = 0; i < maxCount; i++) {
                                                         topSongs.push(item.songs.get(i));
                                                     }
@@ -250,8 +259,8 @@ Item {
                                         delegate: Text {
                                             width: parent.width
                                             text: modelData ? ("#" + modelData.rank + " " + modelData.song + " - " + modelData.artist) : ""
-                                            color: "white"
-                                            font.pixelSize: 11
+                                            color: "black"
+                                            font.pixelSize: 13
                                             elide: Text.ElideRight
                                         }
                                     }
@@ -268,8 +277,14 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
 
-                            onEntered: cardItem.hovered = true
-                            onExited: cardItem.hovered = false
+                            onEntered: {
+                                cardItem.hovered = true;
+                                cardImage.opacity = 0.5;
+                            }
+                            onExited: {
+                                cardItem.hovered = false;
+                                cardImage.opacity = 1.0;
+                            }
 
                             // 点击事件
                             onClicked: {
