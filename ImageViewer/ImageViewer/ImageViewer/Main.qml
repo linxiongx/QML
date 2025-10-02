@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import org.example.myplugins
+import org.example.cslide 1.0
 
 ApplicationWindow
 {
@@ -38,7 +39,7 @@ ApplicationWindow
             anchors.verticalCenter: parent.verticalCenter;
             text: qsTr("EXIF");
             imageSource: Qt.resolvedUrl("res/favicon.ico");
-            onClicked: idImageInfoText.visible = !idImageInfoText.visible;
+            onClicked: idMyImageInfo.visible = !idMyImageInfo.visible;
         }
 
 
@@ -82,12 +83,35 @@ ApplicationWindow
                 marginValue: root.marginValue + 2;
 
                 imageSource: idImage.source;
+                slideEngine: mainCSlide;
             }
 
             ScanToolButton
             {
                 marginValue: root.marginValue + 2;
             }
+        }
+    }
+
+    // 左侧胶片栏组件 - 悬浮在图片容器上方
+    FilmStrip {
+        id: filmStrip
+        anchors.left: parent.left
+        anchors.top: idToolBarRectangle.bottom
+        anchors.bottom: parent.bottom
+        slideEngine: mainCSlide
+        currentImageSource: idImage.source
+        z: 100  // 确保胶片栏在最高层级
+
+        onImageSelected: function(imageSource) {
+            idImage.source = imageSource;
+            // 重置缩放和位置
+            imageScale = 1.0
+            imageContainer.x = (idContainer.width - imageContainer.width) / 2
+            imageContainer.y = (idContainer.height - imageContainer.height) / 2
+            // 显示缩放比例
+            idScanInfoLayout.visible = true
+            idScanInfoTimer.restart()
         }
     }
 
@@ -137,6 +161,7 @@ ApplicationWindow
         }
 
         color: "black";
+        z: 0  // 确保在较低层级
 
         // 双击容器还原功能
         MouseArea {
@@ -333,20 +358,6 @@ ApplicationWindow
                            }
             }
         }
-
-
-        MyImageInfo
-        {
-            id: idImageInfoText;
-
-            visible: false;
-            anchors.left: parent.left;
-            anchors.leftMargin: 10;
-            anchors.top: parent.top;
-            anchors.topMargin: 20;
-
-            imageSource: idImage.source.toString();
-        }
     }
 
     // 图片缩放相关属性
@@ -354,6 +365,26 @@ ApplicationWindow
     property real minScale: 0.1
     property real maxScale: 10.0
     property real scaleStep: 0.1
+
+    CSlide {
+        id: mainCSlide
+    }
+
+    // 图片信息组件
+    MyImageInfo {
+        id: idMyImageInfo
+        anchors {
+            top: idToolBarRectangle.bottom
+            right: parent.right
+            topMargin: 10
+            rightMargin: 10
+        }
+        visible: false
+        imageSource: idImage.source
+        scaleValue: Math.round(imageScale * 100)
+    }
+
+
 
     //显示放大系数
     Item
