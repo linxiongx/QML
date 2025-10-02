@@ -19,6 +19,8 @@ QString ImageInfo::imageSource() const
 
 void ImageInfo::setImageSource(QString newImageSource)
 {
+    std::unique_lock lck(m_mtx);
+
     qDebug() << "C++ imageSource: " << newImageSource;
 
     newImageSource.remove("file:///");
@@ -88,6 +90,8 @@ ImageInfoStruct* ImageInfo::getImageInfo() const
 
 void ImageInfo::setImageInfo(ImageInfoStruct* newImageInfo)
 {
+    std::unique_lock lck(m_mtx);
+
     if(newImageInfo != nullptr && m_imageInfo != nullptr)
     {
         if(newImageInfo->name() == m_imageInfo->name())

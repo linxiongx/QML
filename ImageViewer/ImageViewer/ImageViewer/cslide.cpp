@@ -75,11 +75,15 @@ QString CSlide::getImageFile()
     {
     case SlideType::RANDOMIZATION:
     {
-        int nRandomIndex = index;
-        while(!(m_lstImagePath.size() != 1 && index != nRandomIndex))
-        {
-            nRandomIndex = QRandomGenerator::global()->bounded(m_lstImagePath.size());
+        if (m_lstImagePath.size() == 1) {
+            strFile = m_lstImagePath.at(0);  // 单文件直接返回，无需随机
+            break;
         }
+
+        int nRandomIndex;
+        do {
+            nRandomIndex = QRandomGenerator::global()->bounded(m_lstImagePath.size());
+        } while (nRandomIndex == index);  // 避免与当前相同
 
         strFile = m_lstImagePath.at(nRandomIndex);
         break;

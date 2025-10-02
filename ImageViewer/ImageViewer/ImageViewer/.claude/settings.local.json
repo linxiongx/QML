@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Read(//f/IT/GitHup/QML/ImageViewer/**)"
     ],
     "deny": [],
     "ask": []

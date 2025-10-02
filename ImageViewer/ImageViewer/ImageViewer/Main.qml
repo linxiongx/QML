@@ -97,15 +97,23 @@ ApplicationWindow
         function onImageFileSourceChanged(strFilePath)
         {
             if (idSlideToolButton.currentEffect === "flip") {
-                // 播放翻转动画
+                // 先翻转当前图片
+                // 计算旋转中心为窗口中心 (idContainer 中心相对于 imageContainer 的偏移)
+                var centerOffsetX = idContainer.width / 2 - imageContainer.x;
+                var centerOffsetY = idContainer.height / 2 - imageContainer.y;
+                idImageRotation.origin.x = centerOffsetX;
+                idImageRotation.origin.y = centerOffsetY;
+
                 idFlipAnimation.start();
-                // 动画完成后切换图片
-                idFlipAnimation.onStopped.connect(function() {
+                // 动画完成后切换图片并立即显示 (一次性连接)
+                var flipHandler = function() {
                     idImage.source = "file:///" + strFilePath;
-                    idFlipBackAnimation.start();
-                    // 断开连接，避免重复连接
-                    idFlipAnimation.onStopped.disconnect(arguments.callee);
-                });
+                    idImageRotation.angle = 0; // 重置旋转角度
+                    idImage.opacity = 1; // 确保新图片完全显示
+                    // 断开此连接，避免重复
+                    idFlipAnimation.onStopped.disconnect(flipHandler);
+                };
+                idFlipAnimation.onStopped.connect(flipHandler);
             } else {
                 // 无效果，直接切换图片
                 idImage.source = "file:///" + strFilePath;
@@ -130,6 +138,22 @@ ApplicationWindow
 
         color: "black";
 
+        // 双击容器还原功能
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onDoubleClicked: function(mouse) {
+                // 双击容器还原缩放和位置
+                imageScale = 1.0
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2
+
+                // 显示缩放比例
+                idScanInfoLayout.visible = true
+                idScanInfoTimer.restart()
+            }
+        }
+
         ScrollView
         {
             id: idScrollView;
@@ -141,58 +165,62 @@ ApplicationWindow
             clip: true;
             wheelEnabled: false;
 
-            Image
-            {
-                id: idImage;
+            Item {
+                id: imageContainer
+                width: Math.min(idImage.sourceSize.width, idContainer.width - 20) * imageScale;
+                height: Math.min(idImage.sourceSize.height, idContainer.height - 20) * imageScale;
+                x: (idContainer.width - width) / 2;
+                y: (idContainer.height - height) / 2;
 
-                width: sourceSize.width;
-                height: sourceSize.height;
-                x: (idContainer.width - idImage.sourceSize.width) / 2;
-                y: (idContainer.height - idImage.sourceSize.height) / 2;
+                // 鼠标拖拽移动图片功能
+                property bool dragging: false
 
-                // width: 500;
-                // height: 500;
-                // x: (idContainer.width - 500) / 2;
-                // y: (idContainer.height - 500) / 2;
+                MouseArea {
+                    id: dragMouseArea
+                    anchors.fill: parent
+                    cursorShape: parent.dragging ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                    drag.target: parent
+                    drag.axis: Drag.XAndYAxis
+                    drag.threshold: 0 // 立即开始拖拽，无延迟
+                    drag.smoothed: false // 禁用平滑，提高响应速度
+                    preventStealing: true // 防止事件被窃取
 
-
-                //source: Qt.resolvedUrl("file:///H:\\图片\\Group 5\\file 963x1440_004302.jpg");
-                //source: Qt.resolvedUrl("file:///H:\\图片\\Group 5\\file 963x1440_00430xxxxx2.jpg");
-                //source: Qt.resolvedUrl("file:///H:\\图片\\Snipaste 1816x1028_000093.png");
-                fillMode: Image.PreserveAspectFit
-
-                transform: [
-                    Scale
-                    {
-                        id: idImageScale;
-                        origin.x: idImage.width / 2;
-                        origin.y: idImage.height / 2;
-                        xScale: 1.0;
-                        yScale: 1.0;
-                    },
-                    Rotation
-                    {
-                        id: idImageRotation;
-                        origin.x: idImage.width / 2;
-                        origin.y: idImage.height / 2;
-                        axis { x: 0; y: 1; z: 0 }
-                        angle: 0
+                    onPressed: function(mouse) {
+                        parent.dragging = true
                     }
-                ]
 
-                onSourceChanged:
-                {
-                    idImageScale.xScale = 1.0;
-                    idImageScale.yScale = 1.0;
+                    onDoubleClicked: function(mouse) {
+                        // 双击还原缩放和位置
+                        imageScale = 1.0
+                        imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                        imageContainer.y = (idContainer.height - imageContainer.height) / 2
 
-                    // 确保图片居中显示
-                    idImage.x = (idContainer.width - idImage.sourceSize.width) / 2;
-                    idImage.y = (idContainer.height - idImage.sourceSize.height) / 2;
+                        // 显示缩放比例
+                        idScanInfoLayout.visible = true
+                        idScanInfoTimer.restart()
+                    }
 
-                    idImageAnimation.start();
+                    onReleased: {
+                        parent.dragging = false
+                    }
+
+                    onCanceled: {
+                        parent.dragging = false
+                    }
                 }
 
-                opacity: 1;
+                Image
+                {
+                    id: idImage;
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    opacity: 1;
+
+                    transform: Rotation {
+                        id: idImageRotation
+                        // 动态设置为窗口中心，将在动画前计算
+                    }
+                }
 
                 ParallelAnimation
                 {
@@ -200,10 +228,10 @@ ApplicationWindow
 
                     RotationAnimation
                     {
-                        target: idImage;
+                        target: imageContainer;
                         properties: "x";
                         from: idScrollView.width;
-                        to: idImage.x;
+                        to: imageContainer.x;
                         duration: 500;
                         easing.type: Easing.InOutQuad;
                     }
@@ -230,8 +258,8 @@ ApplicationWindow
                             target: idImageRotation;
                             property: "angle";
                             from: 0;
-                            to: 90;
-                            duration: 250;
+                            to: 180;
+                            duration: 500;
                             easing.type: Easing.InOutQuad;
                         }
 
@@ -240,35 +268,8 @@ ApplicationWindow
                             target: idImage;
                             property: "opacity";
                             from: 1;
-                            to: 0.3;
-                            duration: 250;
-                        }
-                    }
-                }
-
-                SequentialAnimation
-                {
-                    id: idFlipBackAnimation;
-
-                    ParallelAnimation
-                    {
-                        RotationAnimation
-                        {
-                            target: idImageRotation;
-                            property: "angle";
-                            from: 90;
                             to: 0;
-                            duration: 250;
-                            easing.type: Easing.InOutQuad;
-                        }
-
-                        NumberAnimation
-                        {
-                            target: idImage;
-                            property: "opacity";
-                            from: 0.3;
-                            to: 1;
-                            duration: 250;
+                            duration: 500;
                         }
                     }
                 }
@@ -278,6 +279,42 @@ ApplicationWindow
             {
                 id: idDropArea;
                 anchors.fill: parent;
+
+                // 鼠标滚轮缩放功能
+                WheelHandler {
+                    onWheel: function(event) {
+                        // 滚轮缩放图片
+                        var delta = event.angleDelta.y / 120; // 标准化滚轮增量
+                        var newScale = imageScale + delta * scaleStep;
+
+                        // 限制缩放范围
+                        if (newScale >= minScale && newScale <= maxScale) {
+                            // 计算鼠标位置相对于图片容器的坐标
+                            var mouseX = event.x
+                            var mouseY = event.y
+
+                            // 计算缩放前的图片中心点
+                            var oldCenterX = imageContainer.x + imageContainer.width / 2
+                            var oldCenterY = imageContainer.y + imageContainer.height / 2
+
+                            // 更新缩放比例
+                            imageScale = newScale
+
+                            // 计算缩放后的图片中心点
+                            var newCenterX = imageContainer.x + imageContainer.width / 2
+                            var newCenterY = imageContainer.y + imageContainer.height / 2
+
+                            // 调整位置以保持鼠标位置在图片上的相对位置
+                            imageContainer.x -= (newCenterX - oldCenterX)
+                            imageContainer.y -= (newCenterY - oldCenterY)
+
+                            // 显示缩放比例
+                            idScanInfoLayout.visible = true;
+                            idScanInfoTimer.restart();
+                        }
+                    }
+                }
+
                 onDropped: (drop)=>
                            {
                                if(drop.hasUrls)
@@ -289,9 +326,6 @@ ApplicationWindow
                                        if(["jpg", "png", "gif"].indexOf(extension) !== -1)
                                        {
                                            idImage.source = drop.urls[0];
-                                           idImageScale.xScale = 1;
-                                           idImageScale.yScale = 1;
-
                                            return;
                                        }
                                    }
@@ -300,67 +334,6 @@ ApplicationWindow
             }
         }
 
-        WheelHandler
-        {
-            target: idScrollView;
-            onWheel: (event) => {
-                         if(idImage.status === Image.Ready)
-                         {
-                             const delta = event.angleDelta.y / 120;
-                             let newScale = idImageScale.xScale + delta * 0.1;
-                             newScale = Math.max(0, Math.min(newScale, 3.0));
-
-                             idImageScale.xScale = newScale;
-                             idImageScale.yScale = newScale;
-
-                             // 缩放时重新计算居中位置
-                             idImage.x = (idContainer.width - idImage.sourceSize.width * newScale) / 2;
-                             idImage.y = (idContainer.height - idImage.sourceSize.height * newScale) / 2;
-
-                             idScanInfoLayout.visible = true;
-                             idScanInfoTimer.start();
-
-                             idScanInfoText.text = parseInt(newScale * 100) + "%";
-                             idImageInfoText.scaleValue = parseInt(newScale * 100);
-
-                            // idImageScale.origin.x = event.x;
-                            // idImageScale.origin.y = event.y;
-
-
-                             //  console.log(idImage.sourceSize.width  * newScale +","+idContainer.width+"  ");
-                             //  if(idImage.sourceSize.width * newScale < idContainer.width)
-                             //  {
-                             //      idImage.x = (idContainer.width - idImage.sourceSize.width   * newScale ) / 2;
-
-                             //  }
-                             //  if(idImage.sourceSize.height * newScale < idContainer.height)
-                             //  {
-                             //      idImage.y = (idContainer.height - idImage.sourceSize.height  * newScale ) / 2;
-                             //  }
-                             // idImage.x = 0 - (idImage.width * (idImageScale.xScale - 1)) / 2;
-                         }
-                     }
-        }
-
-
-        DragHandler
-        {
-            id: idHandler;
-            //target: idScrollView.contentItem;
-            //target: idScrollView;
-            target: idScrollView;
-            acceptedButtons: Qt.LeftButton;
-            xAxis.onActiveValueChanged: (delta) => {
-                                            idImage.x = idImage.x + delta;
-                                            //idScrollView.contentItem.contentX -= delta;
-                                            //idScrollView.x -= delta;
-                                        }
-            yAxis.onActiveValueChanged: (delta) => {
-                                            idImage.y = idImage.y + delta;
-                                            //idScrollView.contentItem.contenY -= delta;
-                                            //idScrollView.y -= delta;
-                                        }
-        }
 
         MyImageInfo
         {
@@ -375,6 +348,12 @@ ApplicationWindow
             imageSource: idImage.source.toString();
         }
     }
+
+    // 图片缩放相关属性
+    property real imageScale: 1.0
+    property real minScale: 0.1
+    property real maxScale: 10.0
+    property real scaleStep: 0.1
 
     //显示放大系数
     Item
@@ -396,7 +375,7 @@ ApplicationWindow
         Text
         {
             id: idScanInfoText;
-            text: "70%";
+            text: Math.round(imageScale * 100) + "%";
             anchors.centerIn: idScaleRect;
             font.pointSize: 18;
             color: "white"
