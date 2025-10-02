@@ -11,6 +11,7 @@ MyToolButton
 
     property alias marginValue: idMenu.marginValue;
     required property string imageSource;
+    property CSlide slideEngine;
     property string currentEffect: "none";
 
     signal imageFileSourceChanged(string strFilePath);
@@ -143,6 +144,16 @@ MyToolButton
             onTriggered:
             {
                 idToolButton.currentEffect = "flip";
+            }
+        }
+
+        MyMenuItem
+        {
+            text: "缓入缓出";
+            ButtonGroup.group: idEffectGroup;
+            onTriggered:
+            {
+                idToolButton.currentEffect = "fade";
             }
         }
     }

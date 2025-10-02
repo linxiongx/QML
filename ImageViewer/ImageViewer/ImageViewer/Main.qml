@@ -34,6 +34,7 @@ ApplicationWindow
 
         MyToolButton
         {
+            visible: false; //禁用
             anchors.left: parent.left;
             anchors.leftMargin: 10;
             anchors.verticalCenter: parent.verticalCenter;
@@ -47,34 +48,44 @@ ApplicationWindow
         RowLayout
         {
             anchors.right: parent.right;
-            anchors.rightMargin: 10;
+            anchors.rightMargin: 20;
             layoutDirection: Qt.RightToLeft;
             anchors.verticalCenter: parent.verticalCenter;
 
             spacing: 15;
 
 
-            LockerToolButton
+            // LockerToolButton
+            // {
+            //     onClicked:
+            //     {
+            //         //root.flags = Qt.FramelessWindowHint;
+            //     }
+            // }
+
+            // CopyToolButton
+            // {
+            //     marginValue: root.marginValue + 2;
+            // }
+
+            // EditToolButton
+            // {
+            //     marginValue: root.marginValue + 2;
+            // }
+
+            // BookmarksToolButton
+            // {
+            //     marginValue: root.marginValue + 2;
+            // }
+
+            RotateToolButton
             {
-                onClicked:
-                {
-                    //root.flags = Qt.FramelessWindowHint;
+                id: idRotateToolButton
+                //marginValue: root.marginValue + 2;
+                onClicked: {
+                    // 旋转图片90度，以图片中心为旋转中心
+                    idImageRotation.angle = (idImageRotation.angle + 90) % 360;
                 }
-            }
-
-            CopyToolButton
-            {
-                marginValue: root.marginValue + 2;
-            }
-
-            EditToolButton
-            {
-                marginValue: root.marginValue + 2;
-            }
-
-            BookmarksToolButton
-            {
-                marginValue: root.marginValue + 2;
             }
 
             SlideToolButton
@@ -86,10 +97,10 @@ ApplicationWindow
                 slideEngine: mainCSlide;
             }
 
-            ScanToolButton
-            {
-                marginValue: root.marginValue + 2;
-            }
+            // ScanToolButton
+            // {
+            //     marginValue: root.marginValue + 2;
+            // }
         }
     }
 
@@ -109,9 +120,6 @@ ApplicationWindow
             imageScale = 1.0
             imageContainer.x = (idContainer.width - imageContainer.width) / 2
             imageContainer.y = (idContainer.height - imageContainer.height) / 2
-            // 显示缩放比例
-            idScanInfoLayout.visible = true
-            idScanInfoTimer.restart()
         }
     }
 
@@ -138,10 +146,23 @@ ApplicationWindow
                     idFlipAnimation.onStopped.disconnect(flipHandler);
                 };
                 idFlipAnimation.onStopped.connect(flipHandler);
+            } else if (idSlideToolButton.currentEffect === "fade") {
+                // 缓入缓出效果
+                idFadeOutAnimation.start();
+                // 淡出动画完成后切换图片并开始淡入 (一次性连接)
+                var fadeHandler = function() {
+                    idImage.source = "file:///" + strFilePath;
+                    idFadeInAnimation.start();
+                    // 断开此连接，避免重复
+                    idFadeOutAnimation.onStopped.disconnect(fadeHandler);
+                };
+                idFadeOutAnimation.onStopped.connect(fadeHandler);
             } else {
                 // 无效果，直接切换图片
                 idImage.source = "file:///" + strFilePath;
             }
+            // 更新主 CSlide 对象的当前图片路径
+            mainCSlide.imageSourceChanged(strFilePath);
         }
     }
 
@@ -172,10 +193,6 @@ ApplicationWindow
                 imageScale = 1.0
                 imageContainer.x = (idContainer.width - imageContainer.width) / 2
                 imageContainer.y = (idContainer.height - imageContainer.height) / 2
-
-                // 显示缩放比例
-                idScanInfoLayout.visible = true
-                idScanInfoTimer.restart()
             }
         }
 
@@ -219,10 +236,6 @@ ApplicationWindow
                         imageScale = 1.0
                         imageContainer.x = (idContainer.width - imageContainer.width) / 2
                         imageContainer.y = (idContainer.height - imageContainer.height) / 2
-
-                        // 显示缩放比例
-                        idScanInfoLayout.visible = true
-                        idScanInfoTimer.restart()
                     }
 
                     onReleased: {
@@ -244,6 +257,8 @@ ApplicationWindow
                     transform: Rotation {
                         id: idImageRotation
                         // 动态设置为窗口中心，将在动画前计算
+                        origin.x: imageContainer.width / 2
+                        origin.y: imageContainer.height / 2
                     }
                 }
 
@@ -297,6 +312,30 @@ ApplicationWindow
                             duration: 500;
                         }
                     }
+                }
+
+                // 淡出动画
+                NumberAnimation
+                {
+                    id: idFadeOutAnimation;
+                    target: idImage;
+                    property: "opacity";
+                    from: 1;
+                    to: 0;
+                    duration: 500;
+                    easing.type: Easing.OutQuad;
+                }
+
+                // 淡入动画
+                NumberAnimation
+                {
+                    id: idFadeInAnimation;
+                    target: idImage;
+                    property: "opacity";
+                    from: 0;
+                    to: 1;
+                    duration: 500;
+                    easing.type: Easing.InQuad;
                 }
             }
 
@@ -368,6 +407,39 @@ ApplicationWindow
 
     CSlide {
         id: mainCSlide
+    }
+
+    // 键盘事件处理
+    Shortcut {
+        sequence: "Left"
+        onActivated: {
+            var prevImage = mainCSlide.getPrevImageFile()
+            if (prevImage !== "") {
+                idImage.source = "file:///" + prevImage
+                // 重置缩放和位置
+                imageScale = 1.0
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                // 更新主 CSlide 对象的当前图片路径
+                mainCSlide.imageSourceChanged(prevImage);
+            }
+        }
+    }
+
+    Shortcut {
+        sequence: "Right"
+        onActivated: {
+            var nextImage = mainCSlide.getImageFile()
+            if (nextImage !== "") {
+                idImage.source = "file:///" + nextImage
+                // 重置缩放和位置
+                imageScale = 1.0
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                // 更新主 CSlide 对象的当前图片路径
+                mainCSlide.imageSourceChanged(nextImage);
+            }
+        }
     }
 
     // 图片信息组件

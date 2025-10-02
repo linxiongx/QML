@@ -25,6 +25,8 @@ public:
     Q_INVOKABLE void imageSourceChanged(QString strImagePath);
 
     Q_INVOKABLE QString getImageFile();
+    Q_INVOKABLE QString getPrevImageFile();
+    Q_INVOKABLE QStringList getImageList();
 
 signals:
     void slideTypeChanged();

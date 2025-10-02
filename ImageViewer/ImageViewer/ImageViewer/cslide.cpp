@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QRandomGenerator>
+#include <QUrl>
 
 CSlide::CSlide(QObject *parent)
     : QObject{parent}
@@ -27,24 +28,30 @@ void CSlide::imageSourceChanged(QString strImagePath)
 {
     strImagePath.remove("file:///");
 
+    // 解码URL编码的路径
+    strImagePath = QUrl::fromPercentEncoding(strImagePath.toUtf8());
+
     QFile imageFile(strImagePath);
     if(imageFile.exists() == false)
+    {
+        qDebug() << "图片文件不存在:" << strImagePath;
         return ;
+    }
 
-    if(strImagePath == m_strImageSourcePath)
-        return ;
-
+    // 即使路径相同，也强制更新图片列表
+    // 因为胶片栏需要获取当前目录的所有图片
     m_strImageSourcePath = strImagePath;
-
-    qDebug() << "strImagePath = " << strImagePath;
-
 
     QFileInfo fileInfo(strImagePath);
 
     QString strDirectoryPath = fileInfo.absolutePath();
-    qDebug() << "strDirectoryPath = " << strDirectoryPath;
 
     QDir directory(strDirectoryPath);
+    if(!directory.exists())
+    {
+        qDebug() << "目录不存在:" << strDirectoryPath;
+        return;
+    }
 
     m_lstImagePath.clear();
 
@@ -52,15 +59,13 @@ void CSlide::imageSourceChanged(QString strImagePath)
 
     for(auto iter = lstImagePathTemp.begin(); iter != lstImagePathTemp.end(); ++iter)
     {
-        QString fileExtension = iter->section('.', -1);
+        QString fileExtension = iter->section('.', -1).toLower();
         if(fileExtension == "jpg" || fileExtension == "png" || fileExtension ==  "gif")
         {
-            m_lstImagePath.append(strDirectoryPath + "/" + (*iter));
+            QString fullPath = strDirectoryPath + "/" + (*iter);
+            m_lstImagePath.append(fullPath);
         }
     }
-
-    qDebug() << "文件数量：" << m_lstImagePath.size();
-
 }
 
 QString CSlide::getImageFile()
@@ -99,4 +104,49 @@ QString CSlide::getImageFile()
     }
 
     return strFile;
+}
+
+QString CSlide::getPrevImageFile()
+{
+    if(m_lstImagePath.size() == 0)
+        return {};
+
+    QString strFile = "";
+    int index = m_lstImagePath.indexOf(m_strImageSourcePath);
+
+    switch (m_slideType)
+    {
+    case SlideType::RANDOMIZATION:
+    {
+        // 随机模式下，上一张也使用随机逻辑，但避免与当前相同
+        if (m_lstImagePath.size() == 1) {
+            strFile = m_lstImagePath.at(0);
+            break;
+        }
+
+        int nRandomIndex;
+        do {
+            nRandomIndex = QRandomGenerator::global()->bounded(m_lstImagePath.size());
+        } while (nRandomIndex == index);
+
+        strFile = m_lstImagePath.at(nRandomIndex);
+        break;
+    }
+    case SlideType::SEQUENCES:
+    {
+        // 顺序模式下，上一张是前一张图片
+        index = (index - 1 + m_lstImagePath.size()) % m_lstImagePath.size();
+        strFile = m_lstImagePath[index];
+        break;
+    }
+    default:
+        break;
+    }
+
+    return strFile;
+}
+
+QStringList CSlide::getImageList()
+{
+    return m_lstImagePath;
 }
