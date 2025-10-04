@@ -426,33 +426,7 @@ ApplicationWindow
                     onWheel: function(event) {
                         // 滚轮缩放图片
                         var delta = event.angleDelta.y / 120; // 标准化滚轮增量
-                        var newScale = imageScale + delta * scaleStep;
-
-                        // 限制缩放范围
-                        if (newScale >= minScale && newScale <= maxScale) {
-                            // 计算鼠标位置相对于图片容器的坐标
-                            var mouseX = event.x
-                            var mouseY = event.y
-
-                            // 计算缩放前的图片中心点
-                            var oldCenterX = imageContainer.x + imageContainer.width / 2
-                            var oldCenterY = imageContainer.y + imageContainer.height / 2
-
-                            // 更新缩放比例
-                            imageScale = newScale
-
-                            // 计算缩放后的图片中心点
-                            var newCenterX = imageContainer.x + imageContainer.width / 2
-                            var newCenterY = imageContainer.y + imageContainer.height / 2
-
-                            // 调整位置以保持鼠标位置在图片上的相对位置
-                            imageContainer.x -= (newCenterX - oldCenterX)
-                            imageContainer.y -= (newCenterY - oldCenterY)
-
-                            // 显示缩放比例
-                            idScanInfoLayout.visible = true;
-                            idScanInfoTimer.restart();
-                        }
+                        zoomImage(delta, event.x, event.y);
                     }
                 }
 
@@ -481,6 +455,33 @@ ApplicationWindow
     property real minScale: 0.1
     property real maxScale: 10.0
     property real scaleStep: 0.1
+
+    // 缩放函数 - 复用滚轮缩放逻辑
+    function zoomImage(delta, centerX, centerY) {
+        var newScale = imageScale + delta * scaleStep;
+
+        // 限制缩放范围
+        if (newScale >= minScale && newScale <= maxScale) {
+            // 计算缩放前的图片中心点
+            var oldCenterX = imageContainer.x + imageContainer.width / 2
+            var oldCenterY = imageContainer.y + imageContainer.height / 2
+
+            // 更新缩放比例
+            imageScale = newScale
+
+            // 计算缩放后的图片中心点
+            var newCenterX = imageContainer.x + imageContainer.width / 2
+            var newCenterY = imageContainer.y + imageContainer.height / 2
+
+            // 调整位置以保持中心点在图片上的相对位置
+            imageContainer.x -= (newCenterX - oldCenterX)
+            imageContainer.y -= (newCenterY - oldCenterY)
+
+            // 显示缩放比例
+            idScanInfoLayout.visible = true;
+            idScanInfoTimer.restart();
+        }
+    }
 
     // 裁剪功能相关属性
     property bool canCrop: !idSlideToolButton.isPlaying && idImageRotation.angle === 0
@@ -624,6 +625,91 @@ ApplicationWindow
             if (currentImagePath && currentImagePath !== "") {
                 // 调用删除函数
                 deleteCurrentImage(currentImagePath);
+            }
+        }
+    }
+
+    // 上方向键放大图片
+    Shortcut {
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            // 以窗口中心为缩放中心进行放大
+            var centerX = idContainer.width / 2
+            var centerY = idContainer.height / 2
+            zoomImage(1, centerX, centerY)
+        }
+    }
+
+    // 下方向键缩小图片
+    Shortcut {
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            // 以窗口中心为缩放中心进行缩小
+            var centerX = idContainer.width / 2
+            var centerY = idContainer.height / 2
+            zoomImage(-1, centerX, centerY)
+        }
+    }
+
+    // WASD键控制 - 复用方向键功能
+    // W键 - 上方向键（放大）
+    Shortcut {
+        sequence: "W"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            // 以窗口中心为缩放中心进行放大
+            var centerX = idContainer.width / 2
+            var centerY = idContainer.height / 2
+            zoomImage(1, centerX, centerY)
+        }
+    }
+
+    // A键 - 左方向键（上一张图片）
+    Shortcut {
+        sequence: "A"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            var prevImage = mainCSlide.getPrevImageFile()
+            if (prevImage !== "") {
+                idImage.source = "file:///" + prevImage
+                // 重置缩放和位置
+                imageScale = 1.0
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                // 更新主 CSlide 对象的当前图片路径
+                mainCSlide.imageSourceChanged(prevImage);
+            }
+        }
+    }
+
+    // S键 - 下方向键（缩小）
+    Shortcut {
+        sequence: "S"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            // 以窗口中心为缩放中心进行缩小
+            var centerX = idContainer.width / 2
+            var centerY = idContainer.height / 2
+            zoomImage(-1, centerX, centerY)
+        }
+    }
+
+    // D键 - 右方向键（下一张图片）
+    Shortcut {
+        sequence: "D"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            var nextImage = mainCSlide.getImageFile()
+            if (nextImage !== "") {
+                idImage.source = "file:///" + nextImage
+                // 重置缩放和位置
+                imageScale = 1.0
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                // 更新主 CSlide 对象的当前图片路径
+                mainCSlide.imageSourceChanged(nextImage);
             }
         }
     }
