@@ -273,15 +273,22 @@ ApplicationWindow
                                 var croppedImagePath = mainCSlide.cropImage(currentImagePath,
                                     normalizedRect.x, normalizedRect.y,
                                     normalizedRect.width, normalizedRect.height,
-                                    imageContainer.width, imageContainer.height)
+                                    imageContainer.width, imageContainer.height,
+                                    imageScale)
 
                                 if (croppedImagePath !== "") {
-                                    // 显示裁剪后的图片
+                                    // 显示裁剪后的图片，并重置为原始状态
+                                    imageScale = 1.0
                                     idImage.source = ""
                                     idImage.source = "file:///" + croppedImagePath
-                                    showCropResult(true)
-                                } else {
-                                    showCropResult(false)
+
+                                    // 等待图片加载完成后居中显示
+                                    var centerImage = function() {
+                                        imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                                        imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                                        idImage.sourceSizeChanged.disconnect(centerImage)
+                                    }
+                                    idImage.sourceSizeChanged.connect(centerImage)
                                 }
                             }
                             cropping = false
@@ -476,7 +483,7 @@ ApplicationWindow
     property real scaleStep: 0.1
 
     // 裁剪功能相关属性
-    property bool canCrop: !idSlideToolButton.isPlaying && imageScale === 1.0 && idImageRotation.angle === 0
+    property bool canCrop: !idSlideToolButton.isPlaying && idImageRotation.angle === 0
     property bool cropping: false
     property real cropStartX: 0
     property real cropStartY: 0
@@ -546,12 +553,6 @@ ApplicationWindow
         return rect
     }
 
-    function showCropResult(success) {
-        idCropResultText.text = success ? "裁剪成功" : "裁剪失败"
-        idCropResultRect.color = success ? "green" : "red"
-        idCropResultLayout.visible = true
-        idCropResultTimer.restart()
-    }
 
     CSlide {
         id: mainCSlide
@@ -679,39 +680,4 @@ ApplicationWindow
         }
     }
 
-    // 裁剪结果提示
-    Item
-    {
-        id: idCropResultLayout;
-        anchors.centerIn: parent;
-        visible: false;
-        Rectangle
-        {
-            id: idCropResultRect;
-            width: 240;
-            height: 60;
-            anchors.centerIn: parent;
-            radius: 5;
-            color: "green"
-            opacity: 0.7;
-        }
-
-        Text
-        {
-            id: idCropResultText;
-            text: "裁剪成功";
-            anchors.centerIn: idCropResultRect;
-            font.pointSize: 18;
-            color: "white"
-            opacity: 1;
-        }
-
-        Timer
-        {
-            id: idCropResultTimer;
-            interval: 2000;
-            repeat: false;
-            onTriggered: idCropResultLayout.visible = false;
-        }
-    }
 }

@@ -242,11 +242,12 @@ bool CSlide::deleteImageFile(QString imagePath)
     return success;
 }
 
-QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight)
+QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale)
 {
     qDebug() << "开始裁剪图片:" << imagePath;
     qDebug() << "裁剪区域: x=" << x << "y=" << y << "width=" << width << "height=" << height;
     qDebug() << "容器尺寸: width=" << containerWidth << "height=" << containerHeight;
+    qDebug() << "缩放比例: imageScale=" << imageScale;
 
     // 加载原始图片
     QImage originalImage(imagePath);
@@ -261,8 +262,10 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
 
     qDebug() << "图片原始尺寸: width=" << imgWidth << "height=" << imgHeight;
 
-    // 由于裁剪功能只能在初始状态下使用（无缩放、无旋转）
-    // 且图片在QML中以PreserveAspectFit模式显示，我们需要计算实际的显示尺寸
+    // 图片在QML中以PreserveAspectFit模式显示，我们需要计算实际的显示尺寸
+
+    // 在缩放状态下，我们需要重新计算坐标转换
+    // 鼠标坐标是相对于imageContainer的，而imageContainer的尺寸已经包含了缩放
 
     // 计算图片在容器中的实际显示尺寸（保持宽高比）
     double aspectRatio = (double)imgWidth / imgHeight;
@@ -283,6 +286,7 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     double offsetY = (containerHeight - displayHeight) / 2;
 
     // 计算缩放比例 - 从显示尺寸到原始尺寸
+    // 注意：displayWidth/Height 已经考虑了缩放，因为 containerWidth/Height 包含了缩放
     double scaleX = (double)imgWidth / displayWidth;
     double scaleY = (double)imgHeight / displayHeight;
 
@@ -294,6 +298,9 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     int originalY = (y - offsetY) * scaleY;
     int cropWidth = width * scaleX;
     int cropHeight = height * scaleY;
+
+    qDebug() << "偏移量: offsetX=" << offsetX << "offsetY=" << offsetY;
+    qDebug() << "转换前坐标: x=" << x << "y=" << y << "width=" << width << "height=" << height;
 
     // 确保裁剪区域在图片范围内
     originalX = qMax(0, qMin(originalX, originalImage.width() - 1));

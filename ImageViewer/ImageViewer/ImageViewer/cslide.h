@@ -29,7 +29,7 @@ public:
     Q_INVOKABLE QString getPrevImageFile();
     Q_INVOKABLE QStringList getImageList();
     Q_INVOKABLE bool deleteImageFile(QString imagePath);
-    Q_INVOKABLE QString cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight);
+    Q_INVOKABLE QString cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale);
 
 signals:
     void slideTypeChanged();
