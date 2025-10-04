@@ -26,6 +26,8 @@ Item {
             if (filmstripArea.width === 0) {
                 filmstripArea.width = 200
                 hideTimer.stop()
+                // 展开时定位到当前图片
+                positionToCurrentImage()
             }
         }
 
@@ -206,21 +208,33 @@ Item {
             newModel.push(imagePath);
         }
 
-        // 设置当前项为当前图像
-        var currentPath = currentImageSource.toString().replace("file:///","");
-        var currentIndex = list.indexOf(currentPath);
-        if (currentIndex > -1) {
-            filmstripListView.currentIndex = currentIndex;
-        }
-
         // 重新赋值触发更新
         filmstripModel = newModel;
+
+        // 设置当前项为当前图像
+        positionToCurrentImage();
+    }
+
+    function positionToCurrentImage() {
+        if (filmstripModel.length === 0) return;
+
+        var currentPath = currentImageSource.toString().replace("file:///","");
+        var list = slideEngine.getImageList();
+        var currentIndex = list.indexOf(currentPath);
+
+        if (currentIndex > -1) {
+            filmstripListView.currentIndex = currentIndex;
+            // 滚动到当前项
+            filmstripListView.positionViewAtIndex(currentIndex, ListView.Center);
+        }
     }
 
     onCurrentImageSourceChanged: {
         if (currentImageSource !== "") {
             slideEngine.imageSourceChanged(currentImageSource.toString().replace("file:///",""));
             updateFilmstripList();
+            // 图片切换时也定位到当前图片
+            positionToCurrentImage();
         }
     }
 

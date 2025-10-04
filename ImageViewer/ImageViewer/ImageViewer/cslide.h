@@ -27,6 +27,7 @@ public:
     Q_INVOKABLE QString getImageFile();
     Q_INVOKABLE QString getPrevImageFile();
     Q_INVOKABLE QStringList getImageList();
+    Q_INVOKABLE bool deleteImageFile(QString imagePath);
 
 signals:
     void slideTypeChanged();

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(tasklist)",
-      "Read(//f/IT/GitHup/QML/ImageViewer/**)"
+      "Read(//f/IT/GitHup/QML/ImageViewer/**)",
+      "Bash(ninja clean:*)",
+      "Bash(ninja:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n实现胶片栏悬停呼出和自动收回功能\n\n- 添加左侧胶片栏悬停检测热区（窗口左边缘20像素）\n- 实现鼠标悬停时胶片栏平滑展开动画\n- 添加鼠标移出后延迟500ms自动收回功能\n- 优化胶片栏交互体验，防止误收回\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

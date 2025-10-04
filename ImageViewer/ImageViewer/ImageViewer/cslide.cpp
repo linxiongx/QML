@@ -150,3 +150,41 @@ QStringList CSlide::getImageList()
 {
     return m_lstImagePath;
 }
+
+bool CSlide::deleteImageFile(QString imagePath)
+{
+    // 检查图片是否在当前图片列表中
+    if (!m_lstImagePath.contains(imagePath)) {
+        qDebug() << "图片不在当前列表中:" << imagePath;
+        return false;
+    }
+
+    QFile file(imagePath);
+    if (!file.exists()) {
+        qDebug() << "图片文件不存在:" << imagePath;
+        return false;
+    }
+
+    // 尝试将文件移动到回收站
+    bool success = file.moveToTrash();
+
+    if (success) {
+        qDebug() << "成功将图片移动到回收站:" << imagePath;
+
+        // 从图片列表中移除
+        m_lstImagePath.removeAll(imagePath);
+
+        // 如果删除的是当前显示的图片，更新当前图片路径
+        if (m_strImageSourcePath == imagePath) {
+            if (!m_lstImagePath.isEmpty()) {
+                m_strImageSourcePath = m_lstImagePath.first();
+            } else {
+                m_strImageSourcePath = "";
+            }
+        }
+    } else {
+        qDebug() << "删除图片失败:" << imagePath;
+    }
+
+    return success;
+}

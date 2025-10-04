@@ -10,41 +10,44 @@ Column
    property int intValue: 8;
 
 
-   ImageInfoPlugin
+   ImageInfo
    {
        id: idImageInfoPlugin;
        property string source;
 
        onSourceChanged:
        {
-            console.log("onSourceChanged: source = " + source);
-           idImageInfoPlugin.setImageSource(source);
+           //idImageInfoPlugin.setImageSource(source);
+       }
 
-           var imageInfoStruct = idImageInfoPlugin.getImageInfo(); //JavaScript 使用 var、let、const 等 来定义变量
-           //ImageInfoStruct imageInfoStruct = idImageInfoPlugin.getImageInfo(); //这样报错
+       onImageInfoChanged:
+       {
+           //会崩溃！不要这个功能了
+           // console.log("onImageInfoChanged");
+           // var imageInfoStruct = idImageInfoPlugin.getImageInfo(); //JavaScript 使用 var、let、const 等 来定义变量
+           // //ImageInfoStruct imageInfoStruct = idImageInfoPlugin.getImageInfo(); //这样报错
 
+           // if(imageInfoStruct === null)
+           //     return ;
 
-           if(imageInfoStruct === null)
-               return ;
+           // idFileNameText.text = "文件名: " + imageInfoStruct.name;
+           // //idFileNameText.text = "文件名: " + imageInfoStruct->name; //这样报错：JavaScript没有指针，QML引擎会将指针转换为对象
 
-           idFileNameText.text = "文件名: " + imageInfoStruct.name;
-           //idFileNameText.text = "文件名: " + imageInfoStruct->name; //这样报错：JavaScript没有指针，QML引擎会将指针转换为对象
+           // var nImageSize = imageInfoStruct.size;
+           // if(nImageSize > 1024 * 1024)
+           // {
+           //     var str = ("图片大小：" + (nImageSize/ 1024 / 1024).toFixed(2) + "MB");
+           //      idImageSizeText.text = str;
+           // }
+           // else
+           // {
+           //      var str = ("图片大小：" + (nImageSize / 1024).toFixed(2) + "KB");
+           //      idImageSizeText.text = str;
+           // }
 
-           var nImageSize = imageInfoStruct.size;
-           if(nImageSize > 1024 * 1024)
-           {
-               var str = ("图片大小：" + (nImageSize/ 1024 / 1024).toFixed(2) + "MB");
-                idImageSizeText.text = str;
-           }
-           else
-           {
-                var str = ("图片大小：" + (nImageSize / 1024).toFixed(2) + "KB");
-                idImageSizeText.text = str;
-           }
-
-           idImageModifyDateText.text = "修改日期：" + imageInfoStruct.modifyDate;
-           idImageInfoText.text = "图片信息：" + imageInfoStruct.info;
-           idImageScaleValue.scaleValue = 100;
+           // idImageModifyDateText.text = "修改日期：" + imageInfoStruct.modifyDate;
+           // idImageInfoText.text = "图片信息：" + imageInfoStruct.info;
+           // idImageScaleValue.scaleValue = 100;
        }
    }
 

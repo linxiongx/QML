@@ -13,6 +13,8 @@ MyToolButton
     required property string imageSource;
     property CSlide slideEngine;
     property string currentEffect: "none";
+    property bool isPlaying: idSlideTimer.running;
+    property int slideInterval: idSlideTimer.interval;
 
     signal imageFileSourceChanged(string strFilePath);
 
@@ -168,6 +170,18 @@ MyToolButton
             idToolButton.imageFileSourceChanged(strFilePath);
             console.log("strFilePath = " + strFilePath);
         }
+    }
+
+    function startSlideShow() {
+        idSlideTimer.start();
+    }
+
+    function stopSlideShow() {
+        idSlideTimer.stop();
+    }
+
+    function setSlideInterval(interval) {
+        idSlideTimer.interval = interval;
     }
 
 }

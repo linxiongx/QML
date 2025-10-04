@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import org.example.myplugins
 import org.example.cslide 1.0
 
 ApplicationWindow
@@ -15,6 +14,10 @@ ApplicationWindow
     property int marginValue: 5;
 
     minimumWidth: 500;
+
+    // background: Rectangle {
+    //     color: "lightblue"   // 这里改颜色
+    // }
 
     Rectangle
     {
@@ -405,6 +408,51 @@ ApplicationWindow
     property real maxScale: 10.0
     property real scaleStep: 0.1
 
+    // 删除当前图片函数
+    function deleteCurrentImage(imagePath) {
+        console.log("删除图片:" + imagePath);
+
+        // 在删除前获取下一张图片
+        var nextImage = mainCSlide.getImageFile();
+        console.log("下一张图片:" + nextImage);
+
+        // 调用C++删除函数
+        var success = mainCSlide.deleteImageFile(imagePath);
+
+        if (success) {
+            console.log("删除成功");
+
+            // 更新图片显示
+            if (mainCSlide.getImageList().length > 0) {
+                // 显示下一张图片（如果获取到了）
+                if (nextImage !== "" && nextImage !== imagePath) {
+                    idImage.source = "file:///" + nextImage;
+                    // 重置缩放和位置
+                    imageScale = 1.0;
+                    imageContainer.x = (idContainer.width - imageContainer.width) / 2;
+                    imageContainer.y = (idContainer.height - imageContainer.height) / 2;
+                    // 更新主 CSlide 对象的当前图片路径
+                    mainCSlide.imageSourceChanged(nextImage);
+                } else {
+                    // 如果没有获取到下一张，显示第一张
+                    var firstImage = mainCSlide.getImageList()[0];
+                    idImage.source = "file:///" + firstImage;
+                    // 重置缩放和位置
+                    imageScale = 1.0;
+                    imageContainer.x = (idContainer.width - imageContainer.width) / 2;
+                    imageContainer.y = (idContainer.height - imageContainer.height) / 2;
+                    // 更新主 CSlide 对象的当前图片路径
+                    mainCSlide.imageSourceChanged(firstImage);
+                }
+            } else {
+                // 如果没有图片了，清空显示
+                idImage.source = "";
+            }
+        } else {
+            console.log("删除失败");
+        }
+    }
+
     CSlide {
         id: mainCSlide
     }
@@ -438,6 +486,43 @@ ApplicationWindow
                 imageContainer.y = (idContainer.height - imageContainer.height) / 2
                 // 更新主 CSlide 对象的当前图片路径
                 mainCSlide.imageSourceChanged(nextImage);
+            }
+        }
+    }
+
+    // 空白键控制幻灯片开始/暂停
+    Shortcut {
+        sequence: "Space"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            console.log("onActivated   ")
+            if (idSlideToolButton.isPlaying) {
+                // 如果正在播放，则暂停
+                idSlideToolButton.stopSlideShow();
+            } else {
+                // 如果已暂停，则开始播放（使用当前设置的间隔时间）
+                if (idSlideToolButton.slideInterval > 0) {
+                    idSlideToolButton.startSlideShow();
+                } else {
+                    // 如果没有设置间隔时间，默认使用3秒
+                    idSlideToolButton.setSlideInterval(3000);
+                    idSlideToolButton.startSlideShow();
+                }
+            }
+        }
+    }
+
+    // Delete键删除当前图片
+    Shortcut {
+        sequence: "Delete"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            console.log("Delete key pressed")
+            // 获取当前图片路径
+            var currentImagePath = idImage.source.toString().replace("file:///", "");
+            if (currentImagePath && currentImagePath !== "") {
+                // 调用删除函数
+                deleteCurrentImage(currentImagePath);
             }
         }
     }
