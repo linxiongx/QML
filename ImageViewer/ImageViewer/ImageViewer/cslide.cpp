@@ -17,6 +17,11 @@ CSlide::SlideType CSlide::slideType() const
     return m_slideType;
 }
 
+QString CSlide::imageSourcePath() const
+{
+    return m_strImageSourcePath;
+}
+
 void CSlide::setSlideType(SlideType newSlideType)
 {
     qDebug() << "setSlideType: newSlideType = " << (int)newSlideType;
@@ -43,6 +48,7 @@ void CSlide::imageSourceChanged(QString strImagePath)
     // 即使路径相同，也强制更新图片列表
     // 因为胶片栏需要获取当前目录的所有图片
     m_strImageSourcePath = strImagePath;
+    emit imageSourcePathChanged();
 
     QFileInfo fileInfo(strImagePath);
 
@@ -201,6 +207,7 @@ QString CSlide::getPrevImageFile()
 
 QStringList CSlide::getImageList()
 {
+    qDebug() << "getImageList 返回列表长度:" << m_lstImagePath.size();
     return m_lstImagePath;
 }
 
@@ -218,25 +225,45 @@ bool CSlide::deleteImageFile(QString imagePath)
         return false;
     }
 
-    // 尝试将文件移动到回收站
-    bool success = file.moveToTrash();
+    bool success = true;
 
-    if (success) {
-        qDebug() << "成功将图片移动到回收站:" << imagePath;
+    // 记录最近删除的图片路径（用于恢复时显示）
+    m_lastDeletedPath = imagePath;
 
-        // 从图片列表中移除
-        m_lstImagePath.removeAll(imagePath);
-
-        // 如果删除的是当前显示的图片，更新当前图片路径
-        if (m_strImageSourcePath == imagePath) {
-            if (!m_lstImagePath.isEmpty()) {
-                m_strImageSourcePath = m_lstImagePath.first();
-            } else {
-                m_strImageSourcePath = "";
+    // 延迟删除逻辑
+    if (!m_pendingDeletePath.isEmpty()) {
+        // 有之前的待删除文件，先删除它
+        QFile pendingFile(m_pendingDeletePath);
+        if (pendingFile.exists()) {
+            success = pendingFile.moveToTrash();
+            if (success) {
+                qDebug() << "删除之前的待删除图片:" << m_pendingDeletePath;
+                // 从图片列表中移除
+                m_lstImagePath.removeAll(m_pendingDeletePath);
             }
         }
-    } else {
-        qDebug() << "删除图片失败:" << imagePath;
+    }
+
+    // 记录当前图片路径为待删除
+    m_pendingDeletePath = imagePath;
+    qDebug() << "记录待删除图片:" << imagePath;
+
+    // 从图片列表中移除当前图片（给用户删除的错觉）
+    m_lstImagePath.removeAll(imagePath);
+    qDebug() << "删除后图片列表长度:" << m_lstImagePath.size();
+    qDebug() << "删除后图片列表内容:" << m_lstImagePath;
+
+    // 发出图片列表改变信号
+    emit imageListChanged();
+
+    // 如果删除的是当前显示的图片，更新当前图片路径
+    if (m_strImageSourcePath == imagePath) {
+        if (!m_lstImagePath.isEmpty()) {
+            m_strImageSourcePath = m_lstImagePath.first();
+        } else {
+            m_strImageSourcePath = "";
+        }
+        emit imageSourcePathChanged();
     }
 
     return success;
@@ -333,5 +360,40 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     } else {
         qDebug() << "保存裁剪后的图片失败";
         return "";
+    }
+}
+
+void CSlide::clearPendingDelete()
+{
+    qDebug() << "清空待删除路径，恢复图片:" << m_pendingDeletePath;
+
+    // 如果有待删除的图片，将其重新添加到图片列表中
+    if (!m_pendingDeletePath.isEmpty()) {
+        if (!m_lstImagePath.contains(m_pendingDeletePath)) {
+            m_lstImagePath.append(m_pendingDeletePath);
+            qDebug() << "恢复图片到列表:" << m_pendingDeletePath;
+        }
+        // 恢复后显示该图片
+        m_strImageSourcePath = m_pendingDeletePath;
+        emit imageSourcePathChanged();
+    }
+
+    m_pendingDeletePath = "";
+}
+
+void CSlide::cleanupOnExit()
+{
+    if (!m_pendingDeletePath.isEmpty()) {
+        qDebug() << "程序退出，删除待删除图片:" << m_pendingDeletePath;
+        QFile pendingFile(m_pendingDeletePath);
+        if (pendingFile.exists()) {
+            bool success = pendingFile.moveToTrash();
+            if (success) {
+                qDebug() << "成功删除待删除图片:" << m_pendingDeletePath;
+                // 从图片列表中移除
+                m_lstImagePath.removeAll(m_pendingDeletePath);
+            }
+        }
+        m_pendingDeletePath = "";
     }
 }

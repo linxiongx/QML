@@ -10,6 +10,11 @@ ApplicationWindow
     visible: true
     title: qsTr("图片浏览器")
 
+    onClosing: {
+        console.log("程序关闭，清理待删除图片")
+        mainCSlide.cleanupOnExit()
+    }
+
     id: root;
     property int marginValue: 5;
 
@@ -491,19 +496,22 @@ ApplicationWindow
     property real cropEndX: 0
     property real cropEndY: 0
 
-    // 删除当前图片函数
+    // 删除当前图片函数（使用延迟删除）
     function deleteCurrentImage(imagePath) {
-        console.log("删除图片:" + imagePath);
+        console.log("延迟删除图片:" + imagePath);
 
         // 在删除前获取下一张图片
         var nextImage = mainCSlide.getImageFile();
         console.log("下一张图片:" + nextImage);
 
-        // 调用C++删除函数
+        // 调用C++延迟删除函数
         var success = mainCSlide.deleteImageFile(imagePath);
 
         if (success) {
-            console.log("删除成功");
+            console.log("延迟删除操作成功");
+
+            // 立即更新胶片栏，确保删除的图片从胶片栏中消失
+            filmStrip.updateFilmstripList();
 
             // 更新图片显示
             if (mainCSlide.getImageList().length > 0) {
@@ -532,7 +540,7 @@ ApplicationWindow
                 idImage.source = "";
             }
         } else {
-            console.log("删除失败");
+            console.log("删除操作失败");
         }
     }
 
@@ -710,6 +718,31 @@ ApplicationWindow
                 imageContainer.y = (idContainer.height - imageContainer.height) / 2
                 // 更新主 CSlide 对象的当前图片路径
                 mainCSlide.imageSourceChanged(nextImage);
+            }
+        }
+    }
+
+    // Ctrl+Z 恢复待删除的图片
+    Shortcut {
+        sequence: "Ctrl+Z"
+        context: Qt.ApplicationShortcut
+        onActivated: {
+            console.log("Ctrl+Z pressed - 恢复待删除的图片")
+
+            // 调用C++恢复函数
+            mainCSlide.clearPendingDelete()
+
+            // 更新胶片栏
+            filmStrip.updateFilmstripList();
+
+            // 显示恢复的图片 - 直接使用C++中设置的当前图片路径
+            var currentImagePath = mainCSlide.imageSourcePath;
+            if (currentImagePath !== "") {
+                idImage.source = "file:///" + currentImagePath;
+                // 重置缩放和位置
+                imageScale = 1.0;
+                imageContainer.x = (idContainer.width - imageContainer.width) / 2;
+                imageContainer.y = (idContainer.height - imageContainer.height) / 2;
             }
         }
     }

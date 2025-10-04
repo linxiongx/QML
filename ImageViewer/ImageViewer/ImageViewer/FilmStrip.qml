@@ -64,12 +64,10 @@ Item {
             acceptedButtons: Qt.AllButtons
 
             onEntered: {
-                console.log("鼠标进入胶片栏");
                 hideTimer.stop()
             }
 
             onExited: {
-                console.log("鼠标离开胶片栏");
                 if (!filmstripHotZone.containsMouse && filmstripArea.width > 0) {
                     hideTimer.restart()
                 }
@@ -143,7 +141,7 @@ Item {
                     sourceComponent: Image {
                         id: thumbnailImage
                         anchors.fill: parent
-                        source: modelData
+                        source: model.imagePath
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
                         cache: true
@@ -161,7 +159,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        filmStripRoot.imageSelected(modelData)
+                        filmStripRoot.imageSelected(model.imagePath)
                         filmstripListView.currentIndex = index
                     }
                 }
@@ -194,33 +192,52 @@ Item {
         }
     }
 
-    property var filmstripModel: []
+    property ListModel filmstripModel: ListModel {}
 
     function updateFilmstripList() {
         var list = slideEngine.getImageList();
         console.log("updateFilmstripList 获取到的列表长度:", list.length);
-        var newModel = [];
+        console.log("updateFilmstripList 列表内容:", list);
+
+        // 清空现有模型
+        filmstripModel.clear();
+        console.log("updateFilmstripList - 清空模型后，模型数量:", filmstripModel.count);
 
         for (var i = 0; i < list.length; i++) {
             // 解码URL编码的路径
             var decodedPath = decodeURIComponent(list[i]);
             var imagePath = "file:///" + decodedPath;
-            newModel.push(imagePath);
+            filmstripModel.append({"imagePath": imagePath});
         }
 
-        // 重新赋值触发更新
-        filmstripModel = newModel;
+        console.log("updateFilmstripList - 更新后模型数量:", filmstripModel.count);
 
         // 设置当前项为当前图像
         positionToCurrentImage();
     }
 
     function positionToCurrentImage() {
-        if (filmstripModel.length === 0) return;
+        if (filmstripModel.count === 0) return;
 
         var currentPath = currentImageSource.toString().replace("file:///","");
         var list = slideEngine.getImageList();
-        var currentIndex = list.indexOf(currentPath);
+
+        console.log("positionToCurrentImage - currentPath:", currentPath);
+        console.log("positionToCurrentImage - list:", list);
+
+        // 解码路径进行比较
+        var decodedCurrentPath = decodeURIComponent(currentPath);
+        var currentIndex = -1;
+
+        for (var i = 0; i < list.length; i++) {
+            var decodedListPath = decodeURIComponent(list[i]);
+            if (decodedListPath === decodedCurrentPath) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        console.log("positionToCurrentImage - 找到的索引:", currentIndex);
 
         if (currentIndex > -1) {
             filmstripListView.currentIndex = currentIndex;
@@ -235,6 +252,14 @@ Item {
             updateFilmstripList();
             // 图片切换时也定位到当前图片
             positionToCurrentImage();
+        }
+    }
+
+    Connections {
+        target: slideEngine
+        function onImageListChanged() {
+            console.log("收到图片列表改变信号，更新胶片栏");
+            updateFilmstripList();
         }
     }
 
