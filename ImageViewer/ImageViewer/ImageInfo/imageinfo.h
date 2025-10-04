@@ -2,7 +2,6 @@
 #define IMAGEINFO_H
 
 #include <QObject>
-#include <mutex>
 #include "imageinfostruct.h"
 
 
@@ -31,7 +30,6 @@ signals:
 
 private:
     QString m_imageSource;
-    std::mutex m_mtx;
     QSharedPointer<ImageInfoStruct>  m_imageInfo;
 };
 

@@ -1,2 +1,2 @@
-module com.mycompany.qmlcomponents
+module org.example.myplugins
 plugin ImageInfo
