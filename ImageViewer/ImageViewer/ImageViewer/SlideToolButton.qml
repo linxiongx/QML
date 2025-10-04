@@ -65,6 +65,18 @@ MyToolButton
 
         MenuSeparator{}
 
+        MyMenuItem
+        {
+            text: "1s";
+            ButtonGroup.group: idTimeGroup;
+            onTriggered:
+            {
+                idSlideTimer.stop();
+                idSlideTimer.interval = 1000;
+                idSlideTimer.start();
+            }
+        }
+
 
         MyMenuItem
         {
@@ -123,6 +135,16 @@ MyToolButton
             onTriggered:
             {
                 idCSlide.slideType = CSlide.RANDOMIZATION;
+            }
+        }
+
+        MyMenuItem
+        {
+            text: "伪随机";
+            ButtonGroup.group: idLoopGroup;
+            onTriggered:
+            {
+                idCSlide.slideType = CSlide.PSEUDO_RANDOM;
             }
         }
 

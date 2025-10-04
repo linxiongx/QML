@@ -13,7 +13,8 @@ public:
     enum SlideType
     {
         SEQUENCES = 0, //顺序浏览
-        RANDOMIZATION = 1   //随机浏览
+        RANDOMIZATION = 1,   //随机浏览
+        PSEUDO_RANDOM = 2    //伪随机浏览
     };
     Q_ENUM(SlideType)
 

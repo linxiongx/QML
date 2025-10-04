@@ -93,6 +93,32 @@ QString CSlide::getImageFile()
         strFile = m_lstImagePath.at(nRandomIndex);
         break;
     }
+    case SlideType::PSEUDO_RANDOM:
+    {
+        if (m_lstImagePath.size() == 1) {
+            strFile = m_lstImagePath.at(0);  // 单文件直接返回
+            break;
+        }
+
+        // 伪随机算法：在1~7里随机一个数，30%是负数，70%是整数
+        int randomStep = QRandomGenerator::global()->bounded(1, 4); // 生成1~7的随机数
+
+        // 30%概率为负数，70%概率为正数
+        if (QRandomGenerator::global()->bounded(100) < 30) {
+            randomStep = -randomStep;
+        }
+
+        // 计算新的索引位置
+        int newIndex = (index + randomStep + m_lstImagePath.size()) % m_lstImagePath.size();
+
+        // 确保新索引与当前索引不同
+        if (newIndex == index) {
+            newIndex = (newIndex + 1) % m_lstImagePath.size();
+        }
+
+        strFile = m_lstImagePath.at(newIndex);
+        break;
+    }
     case SlideType::SEQUENCES:
     {
         index = (++index) % m_lstImagePath.size();
@@ -118,7 +144,6 @@ QString CSlide::getPrevImageFile()
     {
     case SlideType::RANDOMIZATION:
     {
-        // 随机模式下，上一张也使用随机逻辑，但避免与当前相同
         if (m_lstImagePath.size() == 1) {
             strFile = m_lstImagePath.at(0);
             break;
@@ -130,6 +155,32 @@ QString CSlide::getPrevImageFile()
         } while (nRandomIndex == index);
 
         strFile = m_lstImagePath.at(nRandomIndex);
+        break;
+    }
+    case SlideType::PSEUDO_RANDOM:
+    {
+        if (m_lstImagePath.size() == 1) {
+            strFile = m_lstImagePath.at(0);
+            break;
+        }
+
+        // 伪随机算法：在1~7里随机一个数，30%是负数，70%是整数
+        int randomStep = QRandomGenerator::global()->bounded(1, 8); // 生成1~7的随机数
+
+        // 30%概率为负数，70%概率为正数
+        if (QRandomGenerator::global()->bounded(100) < 30) {
+            randomStep = -randomStep;
+        }
+
+        // 计算新的索引位置（注意：上一张图片使用相反的步长方向）
+        int newIndex = (index - randomStep + m_lstImagePath.size()) % m_lstImagePath.size();
+
+        // 确保新索引与当前索引不同
+        if (newIndex == index) {
+            newIndex = (newIndex - 1 + m_lstImagePath.size()) % m_lstImagePath.size();
+        }
+
+        strFile = m_lstImagePath.at(newIndex);
         break;
     }
     case SlideType::SEQUENCES:

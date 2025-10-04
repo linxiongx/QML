@@ -196,6 +196,8 @@ ApplicationWindow
                 imageScale = 1.0
                 imageContainer.x = (idContainer.width - imageContainer.width) / 2
                 imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                // 还原旋转角度
+                idImageRotation.angle = 0
             }
         }
 
@@ -239,6 +241,8 @@ ApplicationWindow
                         imageScale = 1.0
                         imageContainer.x = (idContainer.width - imageContainer.width) / 2
                         imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                        // 还原旋转角度
+                        idImageRotation.angle = 0
                     }
 
                     onReleased: {

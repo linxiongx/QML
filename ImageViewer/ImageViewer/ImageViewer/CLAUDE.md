@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 关键文件：
 - `Main.qml`：主窗口布局、工具栏、图像交互 (缩放 0.1-10x、拖拽平移、双击重置、翻转动画)。
 - `cslide.h/cpp`：幻灯片管理 (QDir 扫描 JPG/PNG/GIF，getImageFile 返回下一张)。
-- `ImageInfo/`：插件源代码 (MyImageInfo.qml 等)。
+- `ImageInfo/`：插件源代码 (ImageInfoControls.qml 等)。
 - `CMakeLists.txt`：主项目配置，qt_add_executable(appImageViewer) 和 qt_add_qml_module。
 - `main.cpp`：应用入口，注册 CSlide 并加载 QML 模块。
 
