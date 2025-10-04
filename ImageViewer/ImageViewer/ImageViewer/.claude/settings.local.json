@@ -7,7 +7,9 @@
       "Bash(ninja:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\n实现胶片栏悬停呼出和自动收回功能\n\n- 添加左侧胶片栏悬停检测热区（窗口左边缘20像素）\n- 实现鼠标悬停时胶片栏平滑展开动画\n- 添加鼠标移出后延迟500ms自动收回功能\n- 优化胶片栏交互体验，防止误收回\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\n改进CLAUDE.md文档和胶片栏功能\n\n- 更新CLAUDE.md文档，添加快速构建命令和详细功能说明\n- 优化胶片栏虚拟加载技术实现\n- 完善项目架构和开发指导\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\n改进CLAUDE.md文档和胶片栏功能\n\n- 更新CLAUDE.md文档，添加快速构建命令和详细功能说明\n- 优化胶片栏虚拟加载技术实现\n- 完善项目架构和开发指导\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\n提交ImageInfo插件相关修改\n\n- 更新ImageInfo插件相关文件\n- 完善QML插件配置\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\n更新ImageInfo插件完整配置\n\n- 完善ImageInfo插件C++和QML文件\n- 更新插件配置和元数据\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
