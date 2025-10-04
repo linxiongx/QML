@@ -11,8 +11,8 @@ ApplicationWindow
     title: qsTr("图片浏览器")
 
     onClosing: {
-        console.log("程序关闭，清理待删除图片")
-        mainCSlide.cleanupOnExit()
+        console.log("程序关闭")
+        // 不再需要清理待删除图片，已改为即时删除
     }
 
     id: root;
@@ -322,6 +322,13 @@ ApplicationWindow
                     fillMode: Image.PreserveAspectFit
                     opacity: 1;
 
+                    // 图片加载状态
+                    onStatusChanged: {
+                        if (status === Image.Error) {
+                            console.log("主图片加载失败:", source);
+                        }
+                    }
+
                     transform: Rotation {
                         id: idImageRotation
                         // 动态设置为窗口中心，将在动画前计算
@@ -496,45 +503,33 @@ ApplicationWindow
     property real cropEndX: 0
     property real cropEndY: 0
 
-    // 删除当前图片函数（使用延迟删除）
+    // 删除当前图片函数（使用即时删除+撤销）
     function deleteCurrentImage(imagePath) {
-        console.log("延迟删除图片:" + imagePath);
+        // 幻灯片模式下禁止删除
+        if (idSlideToolButton.isPlaying) {
+            console.log("幻灯片播放中，禁止删除");
+            return;
+        }
 
-        // 在删除前获取下一张图片
-        var nextImage = mainCSlide.getImageFile();
-        console.log("下一张图片:" + nextImage);
+        console.log("即时删除图片:" + imagePath);
 
-        // 调用C++延迟删除函数
+        // 调用C++即时删除函数
         var success = mainCSlide.deleteImageFile(imagePath);
 
         if (success) {
-            console.log("延迟删除操作成功");
+            console.log("删除操作成功，图片已移动到回收站");
 
-            // 立即更新胶片栏，确保删除的图片从胶片栏中消失
+            // 界面立即更新
             filmStrip.updateFilmstripList();
 
-            // 更新图片显示
+            // 自动切换到下一张图片（如果还有图片）
             if (mainCSlide.getImageList().length > 0) {
-                // 显示下一张图片（如果获取到了）
-                if (nextImage !== "" && nextImage !== imagePath) {
-                    idImage.source = "file:///" + nextImage;
-                    // 重置缩放和位置
-                    imageScale = 1.0;
-                    imageContainer.x = (idContainer.width - imageContainer.width) / 2;
-                    imageContainer.y = (idContainer.height - imageContainer.height) / 2;
-                    // 更新主 CSlide 对象的当前图片路径
-                    mainCSlide.imageSourceChanged(nextImage);
-                } else {
-                    // 如果没有获取到下一张，显示第一张
-                    var firstImage = mainCSlide.getImageList()[0];
-                    idImage.source = "file:///" + firstImage;
-                    // 重置缩放和位置
-                    imageScale = 1.0;
-                    imageContainer.x = (idContainer.width - imageContainer.width) / 2;
-                    imageContainer.y = (idContainer.height - imageContainer.height) / 2;
-                    // 更新主 CSlide 对象的当前图片路径
-                    mainCSlide.imageSourceChanged(firstImage);
-                }
+                var nextImage = mainCSlide.getImageList()[0];
+                idImage.source = "file:///" + nextImage;
+                // 重置缩放和位置
+                resetImagePosition();
+                // 更新主 CSlide 对象的当前图片路径
+                mainCSlide.imageSourceChanged(nextImage);
             } else {
                 // 如果没有图片了，清空显示
                 idImage.source = "";
@@ -542,6 +537,14 @@ ApplicationWindow
         } else {
             console.log("删除操作失败");
         }
+    }
+
+    // 重置图片位置和缩放
+    function resetImagePosition() {
+        imageScale = 1.0;
+        imageContainer.x = (idContainer.width - imageContainer.width) / 2;
+        imageContainer.y = (idContainer.height - imageContainer.height) / 2;
+        idImageRotation.angle = 0;
     }
 
     // 裁剪功能辅助函数
@@ -565,6 +568,18 @@ ApplicationWindow
 
     CSlide {
         id: mainCSlide
+
+        onImageSourcePathChanged: {
+            console.log("imageSourcePathChanged - 新路径:", mainCSlide.imageSourcePath);
+            if (mainCSlide.imageSourcePath !== "") {
+                // 手动添加file:///前缀
+                var imagePath = "file:///" + mainCSlide.imageSourcePath;
+                console.log("设置主图片路径:", imagePath);
+                idImage.source = imagePath;
+            } else {
+                idImage.source = "";
+            }
+        }
     }
 
     // 键盘事件处理
@@ -627,6 +642,12 @@ ApplicationWindow
         sequence: "Delete"
         context: Qt.ApplicationShortcut
         onActivated: {
+            // 幻灯片模式下禁止删除
+            if (idSlideToolButton.isPlaying) {
+                console.log("幻灯片播放中，禁止删除");
+                return;
+            }
+
             console.log("Delete key pressed")
             // 获取当前图片路径
             var currentImagePath = idImage.source.toString().replace("file:///", "");
@@ -722,27 +743,28 @@ ApplicationWindow
         }
     }
 
-    // Ctrl+Z 恢复待删除的图片
+    // Ctrl+Z 撤销最后一次删除
     Shortcut {
         sequence: "Ctrl+Z"
         context: Qt.ApplicationShortcut
         onActivated: {
-            console.log("Ctrl+Z pressed - 恢复待删除的图片")
+            console.log("Ctrl+Z pressed - 撤销最后一次删除")
 
-            // 调用C++恢复函数
-            mainCSlide.clearPendingDelete()
-
-            // 更新胶片栏
-            filmStrip.updateFilmstripList();
-
-            // 显示恢复的图片 - 直接使用C++中设置的当前图片路径
-            var currentImagePath = mainCSlide.imageSourcePath;
-            if (currentImagePath !== "") {
-                idImage.source = "file:///" + currentImagePath;
-                // 重置缩放和位置
-                imageScale = 1.0;
-                imageContainer.x = (idContainer.width - imageContainer.width) / 2;
-                imageContainer.y = (idContainer.height - imageContainer.height) / 2;
+            // 检查是否可以撤销
+            if (mainCSlide.canUndo()) {
+                // 调用撤销函数
+                var success = mainCSlide.undoLastDelete();
+                if (success) {
+                    console.log("撤销成功");
+                    // 更新胶片栏
+                    filmStrip.updateFilmstripList();
+                    // 界面会自动切换到恢复的图片
+                    console.log("撤销后当前图片:", mainCSlide.imageSourcePath);
+                } else {
+                    console.log("撤销失败");
+                }
+            } else {
+                console.log("没有可撤销的操作");
             }
         }
     }

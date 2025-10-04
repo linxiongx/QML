@@ -150,6 +150,10 @@ Item {
                         onStatusChanged: {
                             if (status === Image.Error) {
                                 console.log("缩略图加载失败:", source);
+                                // 暂移除XMLHttpRequest检测，因为在本地文件上被禁用
+                                // 可以考虑使用其他方法检查文件存在性
+                            } else if (status === Image.Ready) {
+                                console.log("缩略图加载成功:", source);
                             }
                         }
                     }
@@ -197,16 +201,27 @@ Item {
     function updateFilmstripList() {
         var list = slideEngine.getImageList();
         console.log("updateFilmstripList 获取到的列表长度:", list.length);
-        console.log("updateFilmstripList 列表内容:", list);
 
         // 清空现有模型
         filmstripModel.clear();
         console.log("updateFilmstripList - 清空模型后，模型数量:", filmstripModel.count);
 
         for (var i = 0; i < list.length; i++) {
-            // 解码URL编码的路径
-            var decodedPath = decodeURIComponent(list[i]);
-            var imagePath = "file:///" + decodedPath;
+            // C++端返回本地路径，统一转换为file:///格式用于QML Image组件
+            var imagePath = list[i];
+
+            // 确保路径有正确的file:///前缀，用于QML Image组件
+            if (!imagePath.startsWith("file:///")) {
+                // 如果路径是标准本地路径格式（带盘符），转换为FileUrl格式
+                if (imagePath.length >= 2 && imagePath[1] === ':') {
+                    imagePath = "file:///" + imagePath;
+                } else {
+                    // 对于其他格式路径，直接添加file:///前缀
+                    imagePath = "file:///" + imagePath;
+                }
+            }
+
+            console.log("updateFilmstripList - 添加图片路径:", imagePath);
             filmstripModel.append({"imagePath": imagePath});
         }
 
@@ -219,19 +234,33 @@ Item {
     function positionToCurrentImage() {
         if (filmstripModel.count === 0) return;
 
-        var currentPath = currentImageSource.toString().replace("file:///","");
+        var currentImageSourceStr = currentImageSource.toString();
         var list = slideEngine.getImageList();
 
-        console.log("positionToCurrentImage - currentPath:", currentPath);
-        console.log("positionToCurrentImage - list:", list);
+        console.log("positionToCurrentImage - currentImageSource:", currentImageSourceStr);
+        console.log("positionToCurrentImage - list长度:", list.length);
 
-        // 解码路径进行比较
-        var decodedCurrentPath = decodeURIComponent(currentPath);
         var currentIndex = -1;
 
+        // 简化路径比较：直接比较路径内容，不考虑格式差异
         for (var i = 0; i < list.length; i++) {
-            var decodedListPath = decodeURIComponent(list[i]);
-            if (decodedListPath === decodedCurrentPath) {
+            var listImagePath = list[i];
+
+            // 移除listImagePath中可能的file:///前缀（如果存在）
+            if (listImagePath.startsWith("file:///")) {
+                listImagePath = listImagePath.substring(8); // 移除"file:///"前缀
+            }
+
+            // 移除currentImageSourceStr中的file:///前缀（如果存在）
+            var currentPath = currentImageSourceStr;
+            if (currentPath.startsWith("file:///")) {
+                currentPath = currentPath.substring(8);
+            }
+
+            console.log("positionToCurrentImage - 比较:", currentPath, "vs", listImagePath);
+
+            // 直接比较路径字符串
+            if (currentPath === listImagePath) {
                 currentIndex = i;
                 break;
             }
@@ -243,12 +272,21 @@ Item {
             filmstripListView.currentIndex = currentIndex;
             // 滚动到当前项
             filmstripListView.positionViewAtIndex(currentIndex, ListView.Center);
+        } else {
+            console.log("positionToCurrentImage - 未找到匹配的当前图片");
+            console.log("positionToCurrentImage - 当前图片路径:", currentImageSourceStr);
+            console.log("positionToCurrentImage - 可用图片路径:", list);
         }
     }
 
     onCurrentImageSourceChanged: {
         if (currentImageSource !== "") {
-            slideEngine.imageSourceChanged(currentImageSource.toString().replace("file:///",""));
+            // 将file://格式路径转换为本地路径传给C++
+            var localPath = currentImageSource.toString();
+            if (localPath.startsWith("file:///")) {
+                localPath = localPath.substring(8); // 移除"file:///"前缀
+            }
+            slideEngine.imageSourceChanged(localPath);
             updateFilmstripList();
             // 图片切换时也定位到当前图片
             positionToCurrentImage();

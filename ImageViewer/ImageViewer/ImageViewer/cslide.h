@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QStringList>
+#include "undomanager.h"
 
 class CSlide : public QObject
 {
@@ -32,8 +33,11 @@ public:
     Q_INVOKABLE QStringList getImageList();
     Q_INVOKABLE bool deleteImageFile(QString imagePath);
     Q_INVOKABLE QString cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale);
-    Q_INVOKABLE void clearPendingDelete(); // 清空待删除路径
-    Q_INVOKABLE void cleanupOnExit(); // 程序退出时清理
+    Q_INVOKABLE bool undoLastDelete(); // 撤销最后一次删除
+    Q_INVOKABLE bool canUndo() const; // 检查是否可以撤销
+
+private:
+    bool restoreFromTrash(const QString& filePath); // 从回收站恢复文件
 
 signals:
     void slideTypeChanged();
@@ -44,8 +48,7 @@ private:
     SlideType m_slideType = SlideType::SEQUENCES;
     QStringList m_lstImagePath;
     QString m_strImageSourcePath;
-    QString m_pendingDeletePath; // 待删除的图片路径
-    QString m_lastDeletedPath; // 最近删除的图片路径（用于恢复时显示）
+    UndoManager m_undoManager;
 };
 
 #endif // CSLIDE_H

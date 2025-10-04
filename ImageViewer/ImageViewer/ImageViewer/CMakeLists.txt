@@ -29,7 +29,7 @@ qt_add_qml_module(appImageViewer
         QML_FILES MyMenuItem.qml
         QML_FILES MyImageInfo.qml
         QML_FILES FilmStrip.qml
-        SOURCES cslide.h cslide.cpp
+        SOURCES cslide.h cslide.cpp undomanager.h undomanager.cpp
         QML_FILES RotateToolButton.qml
 )
 

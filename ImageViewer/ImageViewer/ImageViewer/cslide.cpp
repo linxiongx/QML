@@ -19,6 +19,11 @@ CSlide::SlideType CSlide::slideType() const
 
 QString CSlide::imageSourcePath() const
 {
+    // 直接返回本地文件路径，让QML处理编码
+    if (m_strImageSourcePath.isEmpty()) {
+        return "";
+    }
+    qDebug() << "imageSourcePath - 返回本地路径:" << m_strImageSourcePath;
     return m_strImageSourcePath;
 }
 
@@ -33,10 +38,15 @@ void CSlide::setSlideType(SlideType newSlideType)
 
 void CSlide::imageSourceChanged(QString strImagePath)
 {
+    qDebug() << "imageSourceChanged - 接收路径:" << strImagePath;
+
+    // 移除file:///前缀
     strImagePath.remove("file:///");
 
-    // 解码URL编码的路径
+    // 解码URL编码的路径（QML传递的路径是编码过的）
     strImagePath = QUrl::fromPercentEncoding(strImagePath.toUtf8());
+
+    qDebug() << "imageSourceChanged - 解码后路径:" << strImagePath;
 
     QFile imageFile(strImagePath);
     if(imageFile.exists() == false)
@@ -208,6 +218,8 @@ QString CSlide::getPrevImageFile()
 QStringList CSlide::getImageList()
 {
     qDebug() << "getImageList 返回列表长度:" << m_lstImagePath.size();
+
+    // 直接返回本地文件路径
     return m_lstImagePath;
 }
 
@@ -225,48 +237,126 @@ bool CSlide::deleteImageFile(QString imagePath)
         return false;
     }
 
-    bool success = true;
+    // 记录删除信息用于撤销
+    int originalIndex = m_lstImagePath.indexOf(imagePath);
+    m_undoManager.recordDelete(imagePath, originalIndex);
 
-    // 记录最近删除的图片路径（用于恢复时显示）
-    m_lastDeletedPath = imagePath;
+    // 简化实现：移动到临时trash目录（模拟回收站）
+    // 在实际应用中，应该使用Windows Shell API来操作真正的回收站
+    QFileInfo fileInfo(imagePath);
+    QString trashDir = QDir::tempPath() + "/ImageViewer_Trash";
 
-    // 延迟删除逻辑
-    if (!m_pendingDeletePath.isEmpty()) {
-        // 有之前的待删除文件，先删除它
-        QFile pendingFile(m_pendingDeletePath);
-        if (pendingFile.exists()) {
-            success = pendingFile.moveToTrash();
-            if (success) {
-                qDebug() << "删除之前的待删除图片:" << m_pendingDeletePath;
-                // 从图片列表中移除
-                m_lstImagePath.removeAll(m_pendingDeletePath);
-            }
+    // 确保trash目录存在
+    QDir().mkpath(trashDir);
+
+    QString trashFilePath = trashDir + "/" + fileInfo.fileName();
+
+    // 先复制到trash目录（防止跨设备问题）
+    bool success = file.copy(trashFilePath);
+
+    if (success) {
+        // 从原位置删除
+        bool removeSuccess = file.remove();
+        if (removeSuccess) {
+            qDebug() << "图片已移动到自定义回收站:" << qUtf8Printable(imagePath);
+            qDebug() << "回收站位置:" << trashFilePath;
+        } else {
+            qDebug() << "从原位置删除失败，尝试恢复:";
+            // 尝试恢复
+            QFile::remove(trashFilePath);
+            success = false;
         }
+    } else {
+        qDebug() << "移动到回收站失败:" << qUtf8Printable(imagePath);
+        return false;
     }
 
-    // 记录当前图片路径为待删除
-    m_pendingDeletePath = imagePath;
-    qDebug() << "记录待删除图片:" << imagePath;
+    if (success) {
+        // 从内存列表中移除
+        m_lstImagePath.removeAll(imagePath);
+        qDebug() << "删除后图片列表长度:" << m_lstImagePath.size();
+        qDebug() << "删除后图片列表内容:" << m_lstImagePath;
 
-    // 从图片列表中移除当前图片（给用户删除的错觉）
-    m_lstImagePath.removeAll(imagePath);
-    qDebug() << "删除后图片列表长度:" << m_lstImagePath.size();
-    qDebug() << "删除后图片列表内容:" << m_lstImagePath;
+        // 发出图片列表改变信号
+        emit imageListChanged();
+
+        // 如果删除的是当前显示的图片，更新当前图片路径
+        if (m_strImageSourcePath == imagePath) {
+            if (!m_lstImagePath.isEmpty()) {
+                m_strImageSourcePath = m_lstImagePath.first();
+            } else {
+                m_strImageSourcePath = "";
+            }
+            emit imageSourcePathChanged();
+        }
+    } else {
+        qDebug() << "移动到回收站失败:" << imagePath;
+    }
+
+    return success;
+}
+
+bool CSlide::undoLastDelete()
+{
+    if (!m_undoManager.canUndo()) {
+        qDebug() << "无法撤销，撤销栈为空";
+        return false;
+    }
+
+    DeleteRecord record = m_undoManager.getLastDelete();
+    qDebug() << "尝试撤销删除，文件:" << qUtf8Printable(record.filePath);
+
+    // 检查文件是否实际存在（应该不存在，因为已在回收站）
+    QFile file(record.filePath);
+    bool fileExists = file.exists();
+
+    if (fileExists) {
+        qDebug() << "文件已存在，无需从回收站恢复:" << qUtf8Printable(record.filePath);
+    } else {
+        qDebug() << "文件不存在，尝试从回收站恢复:" << qUtf8Printable(record.filePath);
+        // 尝试从回收站恢复文件
+        bool restoreSuccess = restoreFromTrash(record.filePath);
+        if (!restoreSuccess) {
+            qDebug() << "从回收站恢复失败:" << qUtf8Printable(record.filePath);
+            return false;
+        }
+        qDebug() << "从回收站恢复成功:" << qUtf8Printable(record.filePath);
+    }
+
+    // 从撤销栈中移除记录
+    m_undoManager.undoLastDelete();
+
+    // 重新添加到图片列表的原始位置
+    if (record.originalIndex >= 0 && record.originalIndex <= m_lstImagePath.size()) {
+        m_lstImagePath.insert(record.originalIndex, record.filePath);
+    } else {
+        // 如果原始位置无效，添加到末尾
+        m_lstImagePath.append(record.filePath);
+    }
+
+    qDebug() << "撤销后图片列表长度:" << m_lstImagePath.size();
+    // 使用qUtf8Printable输出包含中文的路径
+    QStringList pathList;
+    for (const QString& path : m_lstImagePath) {
+        pathList.append(qUtf8Printable(path));
+    }
+    qDebug() << "撤销后图片列表内容:" << pathList.join(", ");
 
     // 发出图片列表改变信号
     emit imageListChanged();
 
-    // 如果删除的是当前显示的图片，更新当前图片路径
-    if (m_strImageSourcePath == imagePath) {
-        if (!m_lstImagePath.isEmpty()) {
-            m_strImageSourcePath = m_lstImagePath.first();
-        } else {
-            m_strImageSourcePath = "";
-        }
-        emit imageSourcePathChanged();
-    }
+    // 自动切换到恢复的图片
+    m_strImageSourcePath = record.filePath;
+    emit imageSourcePathChanged();
 
-    return success;
+    qDebug() << "撤销后当前图片路径:" << qUtf8Printable(m_strImageSourcePath);
+
+    return true;
+}
+
+bool CSlide::canUndo() const
+{
+    return m_undoManager.canUndo();
 }
 
 QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale)
@@ -363,37 +453,37 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     }
 }
 
-void CSlide::clearPendingDelete()
+// 清理延迟删除相关代码，已改为即时删除+撤销机制
+
+bool CSlide::restoreFromTrash(const QString& filePath)
 {
-    qDebug() << "清空待删除路径，恢复图片:" << m_pendingDeletePath;
+    // 简化的"回收站"实现：将文件从temp/trash目录恢复到原始位置
+    // 在实际应用中，应该使用Windows Shell API来操作真正的回收站
 
-    // 如果有待删除的图片，将其重新添加到图片列表中
-    if (!m_pendingDeletePath.isEmpty()) {
-        if (!m_lstImagePath.contains(m_pendingDeletePath)) {
-            m_lstImagePath.append(m_pendingDeletePath);
-            qDebug() << "恢复图片到列表:" << m_pendingDeletePath;
+    QFileInfo fileInfo(filePath);
+    QString trashDir = QDir::tempPath() + "/ImageViewer_Trash";
+    QString trashFilePath = trashDir + "/" + fileInfo.fileName();
+
+    // 检查trash中是否存在该文件
+    QFile trashFile(trashFilePath);
+    if (trashFile.exists()) {
+        // 确保目标目录存在
+        QDir().mkpath(fileInfo.absolutePath());
+
+        // 将文件从trash目录恢复到原始位置
+        bool success = trashFile.rename(fileInfo.absoluteFilePath());
+        if (success) {
+            qDebug() << "从自定义回收站恢复成功:" << qUtf8Printable(filePath);
+            return true;
+        } else {
+            qDebug() << "从自定义回收站恢复失败:" << qUtf8Printable(filePath);
+            qDebug() << "回收站文件:" << trashFilePath;
+            qDebug() << "目标位置:" << fileInfo.absoluteFilePath();
+            return false;
         }
-        // 恢复后显示该图片
-        m_strImageSourcePath = m_pendingDeletePath;
-        emit imageSourcePathChanged();
-    }
-
-    m_pendingDeletePath = "";
-}
-
-void CSlide::cleanupOnExit()
-{
-    if (!m_pendingDeletePath.isEmpty()) {
-        qDebug() << "程序退出，删除待删除图片:" << m_pendingDeletePath;
-        QFile pendingFile(m_pendingDeletePath);
-        if (pendingFile.exists()) {
-            bool success = pendingFile.moveToTrash();
-            if (success) {
-                qDebug() << "成功删除待删除图片:" << m_pendingDeletePath;
-                // 从图片列表中移除
-                m_lstImagePath.removeAll(m_pendingDeletePath);
-            }
-        }
-        m_pendingDeletePath = "";
+    } else {
+        qDebug() << "在自定义回收站中未找到文件:" << qUtf8Printable(filePath);
+        qDebug() << "检查的回收站路径:" << trashFilePath;
+        return false;
     }
 }

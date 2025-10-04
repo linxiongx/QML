@@ -71,7 +71,29 @@ cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
 cmake --build .
 ```
 
-无内置 lint 或测试命令；推荐使用 Qt Creator 或 clang-tidy 检查代码。无单元测试；可添加 QTest 框架。
+### 开发工具和环境设置
+
+- **推荐 IDE**：Qt Creator (最佳 Qt/QML 开发体验)
+- **代码检查**：clang-tidy 或 Qt Creator 内置代码分析
+- **调试构建**：调试版本可用于断点调试和性能分析
+- **代码格式化**：项目暂无强制格式化规范，建议保持现有代码风格
+- **单元测试**：暂无单元测试框架，建议添加 QTest 相关测试
+
+## 重要配置文件
+
+### .claude/settings.local.json
+本地权限配置，包含网络权限设置，无需手动修改。
+
+### CMakeLists.txt.user
+Qt Creator 项目配置文件，包含构建套件和调试配置。
+
+### qmldir
+QML 模块描述文件，定义插件导出：
+```
+module org.example.myplugins
+plugin imageinfo
+imageinfocontrols 1.0 ImageInfoControls.qml
+```
 
 ## Qt/QML 开发
 
@@ -89,6 +111,7 @@ cmake --build .
 ## C++/QML 集成
 
 - CSlide 类：Q_PROPERTY SlideType slideType (SEQUENCES/RANDOMIZATION, NOTIFY slideTypeChanged)；Q_INVOKABLE imageSourceChanged (扫描目录，填充 QStringList m_lstImagePath)；getImageFile (顺序 index++ 或随机避免重复)。
+- UndoManager 类：处理撤销操作，支持删除图片的撤销功能
 - 文件系统：QDir entryList 过滤图片，QFileInfo absolutePath；单文件随机模式返回自身。
 - 信号：slideTypeChanged 用于 QML 更新；Connections 绑定 SlideToolButton 到图像切换。
 
@@ -133,5 +156,16 @@ cmake --build .
 - 拖拽平移：支持鼠标拖拽移动图片位置
 - 双击重置：双击图片或容器重置缩放和位置
 - 旋转功能：支持90度旋转图片
+- 图片裁剪：基于当前显示区域进行图片裁剪
+- 撤销删除：删除图片后可通过 UndoManager 恢复
 
-此版本基于代码分析改进：精确交互/动画细节、路径调整、添加功能说明，提升开发指导性。
+### 资源文件结构
+- **res/**：资源目录，包含应用图标
+- **res/favicon.ico**：应用程序图标
+
+### 常见开发注意事项
+1. **QML 模块导入**：主应用使用 `import ImageViewer 1.0`，插件使用 `import org.example.myplugins`
+2. **文件路径**：使用 `QFileInfo` 处理跨平台路径
+3. **内存管理**：注意图片加载时的内存管理，避免泄漏
+4. **动画性能**：使用 `ListView` 的虚拟滚动优化胶片栏性能
+5. **错误处理**：添加适当的错误处理和边界检查
