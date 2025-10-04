@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个基于 Qt 6 QML 的图片浏览器应用程序，使用 CMake 构建。主项目为 ImageViewer，提供核心查看功能；辅助项目 ImageInfo 为 QML 插件，支持图片信息读取（如 EXIF）。整体支持图片缩放、平移、拖拽打开、幻灯片播放及工具集成。当前实现包括工具栏、图像交互和基本插件集成；需求文档（需求文档.txt）描述了额外功能如左侧胶片栏（未实现）。
+这是一个基于 Qt 6 QML 的图片浏览器应用程序，使用 CMake 构建。主项目为 ImageViewer，提供核心查看功能；辅助项目 ImageInfo 为 QML 插件，支持图片信息读取（如 EXIF）。整体支持图片缩放、平移、拖拽打开、幻灯片播放及工具集成。当前实现包括工具栏、图像交互、左侧胶片栏和基本插件集成。
 
 ## 架构
 
@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `ImageInfo/`：插件源代码 (ImageInfoControls.qml 等)。
 - `CMakeLists.txt`：主项目配置，qt_add_executable(appImageViewer) 和 qt_add_qml_module。
 - `main.cpp`：应用入口，注册 CSlide 并加载 QML 模块。
+- `FilmStrip.qml`：左侧胶片栏组件，支持悬停展开/收回动画和缩略图显示。
 
 ## 开发命令
 
@@ -60,6 +61,14 @@ cd ../../ImageInfo && rm -rf build/
 ```bash
 # 使用 Ninja 快速构建
 cd build && ninja
+```
+
+### 调试构建
+```bash
+# 调试版本构建
+mkdir -p build && cd build
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
+cmake --build .
 ```
 
 无内置 lint 或测试命令；推荐使用 Qt Creator 或 clang-tidy 检查代码。无单元测试；可添加 QTest 框架。
@@ -109,7 +118,7 @@ cd build && ninja
 - 左侧胶片栏：FilmStrip.qml 组件，支持鼠标悬停展开/收回动画
 - 热区检测：窗口左边缘20像素范围内悬停触发
 - 自动收回：鼠标移出后延迟500ms自动收回
-- 缩略图显示：垂直PathView显示当前目录图片缩略图
+- 缩略图显示：ListView实现虚拟滚动，支持懒加载和缓存
 - 点击联动：点击缩略图切换主图显示
 
 ### 键盘快捷键

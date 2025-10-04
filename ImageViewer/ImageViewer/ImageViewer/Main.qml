@@ -225,15 +225,72 @@ ApplicationWindow
                 MouseArea {
                     id: dragMouseArea
                     anchors.fill: parent
-                    cursorShape: parent.dragging ? Qt.ClosedHandCursor : Qt.ArrowCursor
-                    drag.target: parent
+                    cursorShape: {
+                        if (cropping) {
+                            return Qt.CrossCursor
+                        } else if (parent.dragging) {
+                            return Qt.ClosedHandCursor
+                        } else {
+                            return Qt.ArrowCursor
+                        }
+                    }
+                    drag.target: parent.dragging ? parent : null
                     drag.axis: Drag.XAndYAxis
                     drag.threshold: 0 // 立即开始拖拽，无延迟
                     drag.smoothed: false // 禁用平滑，提高响应速度
                     preventStealing: true // 防止事件被窃取
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                     onPressed: function(mouse) {
-                        parent.dragging = true
+                        if (mouse.button === Qt.LeftButton) {
+                            parent.dragging = true
+                        } else if (mouse.button === Qt.RightButton && canCrop) {
+                            // 开始裁剪选区
+                            cropping = true
+                            cropStartX = mouse.x
+                            cropStartY = mouse.y
+                            cropEndX = mouse.x
+                            cropEndY = mouse.y
+                        }
+                    }
+
+                    onPositionChanged: function(mouse) {
+                        if (cropping) {
+                            // 更新选区结束位置
+                            cropEndX = mouse.x
+                            cropEndY = mouse.y
+                        }
+                    }
+
+                    onReleased: function(mouse) {
+                        if (mouse.button === Qt.LeftButton) {
+                            parent.dragging = false
+                        } else if (mouse.button === Qt.RightButton && cropping) {
+                            // 执行裁剪操作
+                            if (cropStartX !== cropEndX && cropStartY !== cropEndY) {
+                                var currentImagePath = idImage.source.toString().replace("file:///", "")
+                                var normalizedRect = getNormalizedCropRect()
+                                var croppedImagePath = mainCSlide.cropImage(currentImagePath,
+                                    normalizedRect.x, normalizedRect.y,
+                                    normalizedRect.width, normalizedRect.height,
+                                    imageContainer.width, imageContainer.height)
+
+                                if (croppedImagePath !== "") {
+                                    // 显示裁剪后的图片
+                                    idImage.source = ""
+                                    idImage.source = "file:///" + croppedImagePath
+                                    showCropResult(true)
+                                } else {
+                                    showCropResult(false)
+                                }
+                            }
+                            cropping = false
+                        }
+                    }
+
+                    onCanceled: {
+                        parent.dragging = false
+                        cropping = false
                     }
 
                     onDoubleClicked: function(mouse) {
@@ -243,14 +300,6 @@ ApplicationWindow
                         imageContainer.y = (idContainer.height - imageContainer.height) / 2
                         // 还原旋转角度
                         idImageRotation.angle = 0
-                    }
-
-                    onReleased: {
-                        parent.dragging = false
-                    }
-
-                    onCanceled: {
-                        parent.dragging = false
                     }
                 }
 
@@ -267,6 +316,20 @@ ApplicationWindow
                         origin.x: imageContainer.width / 2
                         origin.y: imageContainer.height / 2
                     }
+                }
+
+                // 裁剪选区显示
+                Rectangle {
+                    id: cropRect
+                    visible: cropping
+                    x: Math.min(cropStartX, cropEndX)
+                    y: Math.min(cropStartY, cropEndY)
+                    width: Math.abs(cropEndX - cropStartX)
+                    height: Math.abs(cropEndY - cropStartY)
+                    color: "transparent"
+                    border.color: "red"
+                    border.width: 2
+                    z: 10
                 }
 
                 ParallelAnimation
@@ -412,6 +475,14 @@ ApplicationWindow
     property real maxScale: 10.0
     property real scaleStep: 0.1
 
+    // 裁剪功能相关属性
+    property bool canCrop: !idSlideToolButton.isPlaying && imageScale === 1.0 && idImageRotation.angle === 0
+    property bool cropping: false
+    property real cropStartX: 0
+    property real cropStartY: 0
+    property real cropEndX: 0
+    property real cropEndY: 0
+
     // 删除当前图片函数
     function deleteCurrentImage(imagePath) {
         console.log("删除图片:" + imagePath);
@@ -455,6 +526,31 @@ ApplicationWindow
         } else {
             console.log("删除失败");
         }
+    }
+
+    // 裁剪功能辅助函数
+    function getNormalizedCropRect() {
+        var rect = {
+            x: Math.min(cropStartX, cropEndX),
+            y: Math.min(cropStartY, cropEndY),
+            width: Math.abs(cropEndX - cropStartX),
+            height: Math.abs(cropEndY - cropStartY)
+        }
+
+        // 确保选区在图片范围内
+        rect.x = Math.max(0, Math.min(rect.x, imageContainer.width))
+        rect.y = Math.max(0, Math.min(rect.y, imageContainer.height))
+        rect.width = Math.min(rect.width, imageContainer.width - rect.x)
+        rect.height = Math.min(rect.height, imageContainer.height - rect.y)
+
+        return rect
+    }
+
+    function showCropResult(success) {
+        idCropResultText.text = success ? "裁剪成功" : "裁剪失败"
+        idCropResultRect.color = success ? "green" : "red"
+        idCropResultLayout.visible = true
+        idCropResultTimer.restart()
     }
 
     CSlide {
@@ -580,6 +676,42 @@ ApplicationWindow
             interval: 1000;
             repeat: false;
             onTriggered: idScanInfoLayout.visible = false;
+        }
+    }
+
+    // 裁剪结果提示
+    Item
+    {
+        id: idCropResultLayout;
+        anchors.centerIn: parent;
+        visible: false;
+        Rectangle
+        {
+            id: idCropResultRect;
+            width: 240;
+            height: 60;
+            anchors.centerIn: parent;
+            radius: 5;
+            color: "green"
+            opacity: 0.7;
+        }
+
+        Text
+        {
+            id: idCropResultText;
+            text: "裁剪成功";
+            anchors.centerIn: idCropResultRect;
+            font.pointSize: 18;
+            color: "white"
+            opacity: 1;
+        }
+
+        Timer
+        {
+            id: idCropResultTimer;
+            interval: 2000;
+            repeat: false;
+            onTriggered: idCropResultLayout.visible = false;
         }
     }
 }

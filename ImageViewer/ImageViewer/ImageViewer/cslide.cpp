@@ -5,6 +5,8 @@
 #include <QDir>
 #include <QRandomGenerator>
 #include <QUrl>
+#include <QImage>
+#include <QPainter>
 
 CSlide::CSlide(QObject *parent)
     : QObject{parent}
@@ -238,4 +240,91 @@ bool CSlide::deleteImageFile(QString imagePath)
     }
 
     return success;
+}
+
+QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight)
+{
+    qDebug() << "开始裁剪图片:" << imagePath;
+    qDebug() << "裁剪区域: x=" << x << "y=" << y << "width=" << width << "height=" << height;
+    qDebug() << "容器尺寸: width=" << containerWidth << "height=" << containerHeight;
+
+    // 加载原始图片
+    QImage originalImage(imagePath);
+    if (originalImage.isNull()) {
+        qDebug() << "无法加载图片:" << imagePath;
+        return "";
+    }
+
+    // 获取图片的原始尺寸
+    int imgWidth = originalImage.width();
+    int imgHeight = originalImage.height();
+
+    qDebug() << "图片原始尺寸: width=" << imgWidth << "height=" << imgHeight;
+
+    // 由于裁剪功能只能在初始状态下使用（无缩放、无旋转）
+    // 且图片在QML中以PreserveAspectFit模式显示，我们需要计算实际的显示尺寸
+
+    // 计算图片在容器中的实际显示尺寸（保持宽高比）
+    double aspectRatio = (double)imgWidth / imgHeight;
+    double displayWidth, displayHeight;
+
+    if ((double)containerWidth / containerHeight > aspectRatio) {
+        // 容器更宽，图片高度等于容器高度
+        displayHeight = containerHeight;
+        displayWidth = displayHeight * aspectRatio;
+    } else {
+        // 容器更高，图片宽度等于容器宽度
+        displayWidth = containerWidth;
+        displayHeight = displayWidth / aspectRatio;
+    }
+
+    // 计算图片在容器中的偏移量（居中显示）
+    double offsetX = (containerWidth - displayWidth) / 2;
+    double offsetY = (containerHeight - displayHeight) / 2;
+
+    // 计算缩放比例 - 从显示尺寸到原始尺寸
+    double scaleX = (double)imgWidth / displayWidth;
+    double scaleY = (double)imgHeight / displayHeight;
+
+    qDebug() << "显示尺寸: width=" << displayWidth << "height=" << displayHeight;
+    qDebug() << "缩放比例: scaleX=" << scaleX << "scaleY=" << scaleY;
+
+    // 将屏幕坐标转换为原始图片坐标（考虑图片在容器中的偏移）
+    int originalX = (x - offsetX) * scaleX;
+    int originalY = (y - offsetY) * scaleY;
+    int cropWidth = width * scaleX;
+    int cropHeight = height * scaleY;
+
+    // 确保裁剪区域在图片范围内
+    originalX = qMax(0, qMin(originalX, originalImage.width() - 1));
+    originalY = qMax(0, qMin(originalY, originalImage.height() - 1));
+    cropWidth = qMin(cropWidth, originalImage.width() - originalX);
+    cropHeight = qMin(cropHeight, originalImage.height() - originalY);
+
+    qDebug() << "原始图片裁剪区域: x=" << originalX << "y=" << originalY
+             << "width=" << cropWidth << "height=" << cropHeight;
+
+    // 直接裁剪原始图片，创建与选区尺寸相同的新图片
+    QImage croppedImage = originalImage.copy(originalX, originalY, cropWidth, cropHeight);
+
+    if (croppedImage.isNull()) {
+        qDebug() << "裁剪失败";
+        return "";
+    }
+
+    // 生成裁剪后图片的文件名（在原文件名基础上添加_cropped后缀）
+    QFileInfo fileInfo(imagePath);
+    QString croppedImagePath = fileInfo.path() + "/" + fileInfo.completeBaseName() + "_cropped." + fileInfo.suffix();
+
+    // 保存裁剪后的图片到新文件
+    bool saveSuccess = croppedImage.save(croppedImagePath);
+
+    if (saveSuccess) {
+        qDebug() << "裁剪成功，裁剪后图片已保存到:" << croppedImagePath;
+        // 返回裁剪后图片的路径，以便QML可以显示它
+        return croppedImagePath;
+    } else {
+        qDebug() << "保存裁剪后的图片失败";
+        return "";
+    }
 }
