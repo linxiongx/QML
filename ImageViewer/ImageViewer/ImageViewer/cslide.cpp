@@ -23,13 +23,11 @@ QString CSlide::imageSourcePath() const
     if (m_strImageSourcePath.isEmpty()) {
         return "";
     }
-    qDebug() << "imageSourcePath - 返回本地路径:" << m_strImageSourcePath;
     return m_strImageSourcePath;
 }
 
 void CSlide::setSlideType(SlideType newSlideType)
 {
-    qDebug() << "setSlideType: newSlideType = " << (int)newSlideType;
     if (m_slideType == newSlideType)
         return;
     m_slideType = newSlideType;
@@ -38,7 +36,6 @@ void CSlide::setSlideType(SlideType newSlideType)
 
 void CSlide::imageSourceChanged(QString strImagePath)
 {
-    qDebug() << "imageSourceChanged - 接收路径:" << strImagePath;
 
     // 移除file:///前缀
     strImagePath.remove("file:///");
@@ -46,7 +43,6 @@ void CSlide::imageSourceChanged(QString strImagePath)
     // 解码URL编码的路径（QML传递的路径是编码过的）
     strImagePath = QUrl::fromPercentEncoding(strImagePath.toUtf8());
 
-    qDebug() << "imageSourceChanged - 解码后路径:" << strImagePath;
 
     QFile imageFile(strImagePath);
     if(imageFile.exists() == false)
@@ -119,7 +115,7 @@ QString CSlide::getImageFile()
         }
 
         // 伪随机算法：在1~7里随机一个数，30%是负数，70%是整数
-        int randomStep = QRandomGenerator::global()->bounded(1, 4); // 生成1~7的随机数
+        int randomStep = QRandomGenerator::global()->bounded(1, 5); // 生成1~7的随机数
 
         // 30%概率为负数，70%概率为正数
         if (QRandomGenerator::global()->bounded(100) < 30) {
@@ -258,10 +254,9 @@ bool CSlide::deleteImageFile(QString imagePath)
         // 从原位置删除
         bool removeSuccess = file.remove();
         if (removeSuccess) {
-            qDebug() << "图片已移动到自定义回收站:" << qUtf8Printable(imagePath);
-            qDebug() << "回收站位置:" << trashFilePath;
+            qDebug() << "图片已移动到回收站:" << qUtf8Printable(imagePath);
         } else {
-            qDebug() << "从原位置删除失败，尝试恢复:";
+            qDebug() << "从原位置删除失败";
             // 尝试恢复
             QFile::remove(trashFilePath);
             success = false;
@@ -274,8 +269,6 @@ bool CSlide::deleteImageFile(QString imagePath)
     if (success) {
         // 从内存列表中移除
         m_lstImagePath.removeAll(imagePath);
-        qDebug() << "删除后图片列表长度:" << m_lstImagePath.size();
-        qDebug() << "删除后图片列表内容:" << m_lstImagePath;
 
         // 发出图片列表改变信号
         emit imageListChanged();
@@ -304,23 +297,17 @@ bool CSlide::undoLastDelete()
     }
 
     DeleteRecord record = m_undoManager.getLastDelete();
-    qDebug() << "尝试撤销删除，文件:" << qUtf8Printable(record.filePath);
 
     // 检查文件是否实际存在（应该不存在，因为已在回收站）
     QFile file(record.filePath);
     bool fileExists = file.exists();
 
-    if (fileExists) {
-        qDebug() << "文件已存在，无需从回收站恢复:" << qUtf8Printable(record.filePath);
-    } else {
-        qDebug() << "文件不存在，尝试从回收站恢复:" << qUtf8Printable(record.filePath);
+    if (!fileExists) {
         // 尝试从回收站恢复文件
         bool restoreSuccess = restoreFromTrash(record.filePath);
         if (!restoreSuccess) {
-            qDebug() << "从回收站恢复失败:" << qUtf8Printable(record.filePath);
             return false;
         }
-        qDebug() << "从回收站恢复成功:" << qUtf8Printable(record.filePath);
     }
 
     // 从撤销栈中移除记录
@@ -334,22 +321,12 @@ bool CSlide::undoLastDelete()
         m_lstImagePath.append(record.filePath);
     }
 
-    qDebug() << "撤销后图片列表长度:" << m_lstImagePath.size();
-    // 使用qUtf8Printable输出包含中文的路径
-    QStringList pathList;
-    for (const QString& path : m_lstImagePath) {
-        pathList.append(qUtf8Printable(path));
-    }
-    qDebug() << "撤销后图片列表内容:" << pathList.join(", ");
-
     // 发出图片列表改变信号
     emit imageListChanged();
 
     // 自动切换到恢复的图片
     m_strImageSourcePath = record.filePath;
     emit imageSourcePathChanged();
-
-    qDebug() << "撤销后当前图片路径:" << qUtf8Printable(m_strImageSourcePath);
 
     return true;
 }
@@ -361,10 +338,6 @@ bool CSlide::canUndo() const
 
 QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale)
 {
-    qDebug() << "开始裁剪图片:" << imagePath;
-    qDebug() << "裁剪区域: x=" << x << "y=" << y << "width=" << width << "height=" << height;
-    qDebug() << "容器尺寸: width=" << containerWidth << "height=" << containerHeight;
-    qDebug() << "缩放比例: imageScale=" << imageScale;
 
     // 加载原始图片
     QImage originalImage(imagePath);
@@ -407,8 +380,6 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     double scaleX = (double)imgWidth / displayWidth;
     double scaleY = (double)imgHeight / displayHeight;
 
-    qDebug() << "显示尺寸: width=" << displayWidth << "height=" << displayHeight;
-    qDebug() << "缩放比例: scaleX=" << scaleX << "scaleY=" << scaleY;
 
     // 将屏幕坐标转换为原始图片坐标（考虑图片在容器中的偏移）
     int originalX = (x - offsetX) * scaleX;
@@ -416,8 +387,6 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     int cropWidth = width * scaleX;
     int cropHeight = height * scaleY;
 
-    qDebug() << "偏移量: offsetX=" << offsetX << "offsetY=" << offsetY;
-    qDebug() << "转换前坐标: x=" << x << "y=" << y << "width=" << width << "height=" << height;
 
     // 确保裁剪区域在图片范围内
     originalX = qMax(0, qMin(originalX, originalImage.width() - 1));
@@ -425,8 +394,6 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     cropWidth = qMin(cropWidth, originalImage.width() - originalX);
     cropHeight = qMin(cropHeight, originalImage.height() - originalY);
 
-    qDebug() << "原始图片裁剪区域: x=" << originalX << "y=" << originalY
-             << "width=" << cropWidth << "height=" << cropHeight;
 
     // 直接裁剪原始图片，创建与选区尺寸相同的新图片
     QImage croppedImage = originalImage.copy(originalX, originalY, cropWidth, cropHeight);
@@ -473,17 +440,11 @@ bool CSlide::restoreFromTrash(const QString& filePath)
         // 将文件从trash目录恢复到原始位置
         bool success = trashFile.rename(fileInfo.absoluteFilePath());
         if (success) {
-            qDebug() << "从自定义回收站恢复成功:" << qUtf8Printable(filePath);
             return true;
         } else {
-            qDebug() << "从自定义回收站恢复失败:" << qUtf8Printable(filePath);
-            qDebug() << "回收站文件:" << trashFilePath;
-            qDebug() << "目标位置:" << fileInfo.absoluteFilePath();
             return false;
         }
     } else {
-        qDebug() << "在自定义回收站中未找到文件:" << qUtf8Printable(filePath);
-        qDebug() << "检查的回收站路径:" << trashFilePath;
         return false;
     }
 }

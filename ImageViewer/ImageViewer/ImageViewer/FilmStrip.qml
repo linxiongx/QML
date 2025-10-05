@@ -22,7 +22,6 @@ Item {
         acceptedButtons: Qt.AllButtons
 
         onEntered: {
-            console.log("鼠标进入热区");
             if (filmstripArea.width === 0) {
                 filmstripArea.width = 200
                 hideTimer.stop()
@@ -32,7 +31,6 @@ Item {
         }
 
         onExited: {
-            console.log("鼠标离开热区");
             if (!filmstripArea.containsMouse && filmstripArea.width > 0) {
                 hideTimer.restart()
             }
@@ -148,13 +146,7 @@ Item {
 
                         // 图片加载状态
                         onStatusChanged: {
-                            if (status === Image.Error) {
-                                console.log("缩略图加载失败:", source);
-                                // 暂移除XMLHttpRequest检测，因为在本地文件上被禁用
-                                // 可以考虑使用其他方法检查文件存在性
-                            } else if (status === Image.Ready) {
-                                console.log("缩略图加载成功:", source);
-                            }
+                            // 可以在这里添加图片加载状态的逻辑
                         }
                     }
                 }
@@ -164,7 +156,9 @@ Item {
                     anchors.fill: parent
                     onClicked: {
                         filmStripRoot.imageSelected(model.imagePath)
-                        filmstripListView.currentIndex = index
+                        if (typeof index !== 'undefined' && index !== 'null') {
+                            ListView.view.currentIndex = index
+                        }
                     }
                 }
             }
@@ -200,11 +194,9 @@ Item {
 
     function updateFilmstripList() {
         var list = slideEngine.getImageList();
-        console.log("updateFilmstripList 获取到的列表长度:", list.length);
 
         // 清空现有模型
         filmstripModel.clear();
-        console.log("updateFilmstripList - 清空模型后，模型数量:", filmstripModel.count);
 
         for (var i = 0; i < list.length; i++) {
             // C++端返回本地路径，统一转换为file:///格式用于QML Image组件
@@ -221,11 +213,8 @@ Item {
                 }
             }
 
-            console.log("updateFilmstripList - 添加图片路径:", imagePath);
             filmstripModel.append({"imagePath": imagePath});
         }
-
-        console.log("updateFilmstripList - 更新后模型数量:", filmstripModel.count);
 
         // 设置当前项为当前图像
         positionToCurrentImage();
@@ -236,9 +225,6 @@ Item {
 
         var currentImageSourceStr = currentImageSource.toString();
         var list = slideEngine.getImageList();
-
-        console.log("positionToCurrentImage - currentImageSource:", currentImageSourceStr);
-        console.log("positionToCurrentImage - list长度:", list.length);
 
         var currentIndex = -1;
 
@@ -257,8 +243,6 @@ Item {
                 currentPath = currentPath.substring(8);
             }
 
-            console.log("positionToCurrentImage - 比较:", currentPath, "vs", listImagePath);
-
             // 直接比较路径字符串
             if (currentPath === listImagePath) {
                 currentIndex = i;
@@ -266,16 +250,10 @@ Item {
             }
         }
 
-        console.log("positionToCurrentImage - 找到的索引:", currentIndex);
-
         if (currentIndex > -1) {
             filmstripListView.currentIndex = currentIndex;
             // 滚动到当前项
             filmstripListView.positionViewAtIndex(currentIndex, ListView.Center);
-        } else {
-            console.log("positionToCurrentImage - 未找到匹配的当前图片");
-            console.log("positionToCurrentImage - 当前图片路径:", currentImageSourceStr);
-            console.log("positionToCurrentImage - 可用图片路径:", list);
         }
     }
 
