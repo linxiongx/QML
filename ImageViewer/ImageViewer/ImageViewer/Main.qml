@@ -281,8 +281,11 @@ ApplicationWindow
 
                                     // 等待图片加载完成后居中显示
                                     var centerImage = function() {
+                                        imageScale = 1.0
                                         imageContainer.x = (idContainer.width - imageContainer.width) / 2
                                         imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                                        // 还原旋转角度
+                                        idImageRotation.angle = 0
                                         idImage.sourceSizeChanged.disconnect(centerImage)
                                     }
                                     idImage.sourceSizeChanged.connect(centerImage)
@@ -607,6 +610,17 @@ ApplicationWindow
                                        if(["jpg", "png", "gif"].indexOf(extension) !== -1)
                                        {
                                            idImage.source = drop.urls[0];
+
+                                           // 等待图片加载完成后居中显示
+                                           var centerImage = function() {
+                                               // 重置缩放和位置
+                                               imageScale = 1.0
+                                               idImageRotation.angle = 0
+                                               imageContainer.x = (idContainer.width - imageContainer.width) / 2
+                                               imageContainer.y = (idContainer.height - imageContainer.height) / 2
+                                               idImage.sourceSizeChanged.disconnect(centerImage)
+                                           }
+                                           idImage.sourceSizeChanged.connect(centerImage)
                                            return;
                                        }
                                    }
@@ -669,36 +683,9 @@ ApplicationWindow
 
         // 调用C++即时删除函数
         var success = mainCSlide.deleteImageFile(imagePath);
-
-        if (success) {
-            console.log("删除操作成功，图片已移动到回收站");
-
-            // 界面立即更新
-            filmStrip.updateFilmstripList();
-
-            // 自动切换到下一张图片（如果还有图片）
-            if (mainCSlide.getImageList().length > 0) {
-                var nextImage = mainCSlide.getImageList()[0];
-                idImage.source = "file:///" + nextImage;
-                // 重置缩放和位置
-                resetImagePosition();
-                // 更新主 CSlide 对象的当前图片路径
-                mainCSlide.imageSourceChanged(nextImage);
-            } else {
-                // 如果没有图片了，清空显示
-                idImage.source = "";
-            }
-        } else {
-            console.log("删除操作失败");
+        if (!success) {
+                console.log("删除操作失败");
         }
-    }
-
-    // 重置图片位置和缩放
-    function resetImagePosition() {
-        imageScale = 1.0;
-        imageContainer.x = (idContainer.width - imageContainer.width) / 2;
-        imageContainer.y = (idContainer.height - imageContainer.height) / 2;
-        idImageRotation.angle = 0;
     }
 
     // 裁剪功能辅助函数
@@ -740,6 +727,11 @@ ApplicationWindow
             } else {
                 idImage.source = "";
             }
+
+            //图片居中
+            imageScale = 1.0
+            imageContainer.x = (idContainer.width - imageContainer.width) / 2
+            imageContainer.y = (idContainer.height - imageContainer.height) / 2
         }
     }
 
@@ -781,7 +773,6 @@ ApplicationWindow
         sequence: "Space"
         context: Qt.ApplicationShortcut
         onActivated: {
-            console.log("onActivated   ")
             if (idSlideToolButton.isPlaying) {
                 // 如果正在播放，则暂停
                 idSlideToolButton.stopSlideShow();

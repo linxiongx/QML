@@ -38,6 +38,7 @@ public:
 
 private:
     bool restoreFromTrash(const QString& filePath); // 从回收站恢复文件
+    bool copyFileOverwrite(const QString &src, const QString &dst); //移动文件，如果文件存在则覆盖
 
 signals:
     void slideTypeChanged();

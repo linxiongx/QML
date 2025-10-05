@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import org.example.cslide
+ import QtQuick.Effects
 
 MyToolButton
 {
@@ -8,6 +9,7 @@ MyToolButton
     text: qsTr("幻灯片放映");
     imageSource: Qt.resolvedUrl("res/favicon.ico");
     onClicked: idMenu.open();
+
 
     property alias marginValue: idMenu.marginValue;
     required property string imageSource;
@@ -47,13 +49,16 @@ MyToolButton
     {
         id: idMenu;
 
+        palette.window: "#505050"
+
         property int marginValue: 0;
 
         y: idToolButton.y + idToolButton.height + marginValue;
-        x: idToolButton.x;
+        x: idToolButton.x - 60;
 
         MyMenuItem
         {
+            id: idStopSlide
             text: "停止放映";
             checked: true;
             ButtonGroup.group: idTimeGroup;
@@ -63,10 +68,22 @@ MyToolButton
             }
         }
 
-        MenuSeparator{}
+       //MenuSeparator{}
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: Qt.rgba(0, 0, 0, 0.3)   // 线条颜色
+            opacity: 0.8
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+        }
+
+
 
         MyMenuItem
         {
+            id:idSlide_1s
             text: "1s";
             ButtonGroup.group: idTimeGroup;
             onTriggered:
@@ -80,6 +97,7 @@ MyToolButton
 
         MyMenuItem
         {
+            id:idSlide_3s
             text: "3s";
             ButtonGroup.group: idTimeGroup;
             onTriggered:
@@ -92,6 +110,7 @@ MyToolButton
 
         MyMenuItem
         {
+            id:idSlide_10s
             text: "10s";
             ButtonGroup.group: idTimeGroup;
             onTriggered:
@@ -104,6 +123,7 @@ MyToolButton
 
         MyMenuItem
         {
+            id:idSlide_30s
             text: "30s";
             ButtonGroup.group: idTimeGroup;
             onTriggered:
@@ -115,7 +135,16 @@ MyToolButton
         }
 
 
-        MenuSeparator{}
+        //MenuSeparator{}
+         Rectangle {
+             width: parent.width
+             height: 1
+             color: Qt.rgba(0, 0, 0, 0.3)   // 线条颜色
+             opacity: 0.8
+             anchors.horizontalCenter: parent.horizontalCenter
+             anchors.leftMargin: 8
+             anchors.rightMargin: 8
+         }
 
         MyMenuItem
         {
@@ -148,7 +177,16 @@ MyToolButton
             }
         }
 
-        MenuSeparator{}
+        //MenuSeparator{}
+         Rectangle {
+             width: parent.width
+             height: 1
+             color: Qt.rgba(0, 0, 0, 0.3)   // 线条颜色
+             opacity: 0.8
+             anchors.horizontalCenter: parent.horizontalCenter
+             anchors.leftMargin: 8
+             anchors.rightMargin: 8
+         }
 
         MyMenuItem
         {
@@ -186,20 +224,36 @@ MyToolButton
     {
         id: idSlideTimer;
         repeat: true;
+        interval: 3000;
         onTriggered:
         {
             var strFilePath = idCSlide.getImageFile();
             idToolButton.imageFileSourceChanged(strFilePath);
-            console.log("strFilePath = " + strFilePath);
         }
     }
 
     function startSlideShow() {
+        switch(idSlideToolButton.slideInterval)
+        {
+        case 1000:
+                idSlide_1s.checked = true;
+            break;
+        case 3000:
+                idSlide_3s.checked = true;
+            break;
+        case 10000:
+                idSlide_10s.checked = true;
+            break;
+        case 30000:
+                idSlide_30s.checked = true;
+            break;
+        }
         idSlideTimer.start();
     }
 
     function stopSlideShow() {
         idSlideTimer.stop();
+        idStopSlide.checked = true;
     }
 
     function setSlideInterval(interval) {

@@ -248,7 +248,8 @@ bool CSlide::deleteImageFile(QString imagePath)
     QString trashFilePath = trashDir + "/" + fileInfo.fileName();
 
     // 先复制到trash目录（防止跨设备问题）
-    bool success = file.copy(trashFilePath);
+    //bool success = file.copy(trashFilePath); ///////////////////////////////////////////////////////
+    bool success = copyFileOverwrite(imagePath, trashFilePath);
 
     if (success) {
         // 从原位置删除
@@ -267,18 +268,32 @@ bool CSlide::deleteImageFile(QString imagePath)
     }
 
     if (success) {
+        // 记录删除前的索引
+        int originalIndex = m_lstImagePath.indexOf(imagePath);
+
         // 从内存列表中移除
-        m_lstImagePath.removeAll(imagePath);
+        m_lstImagePath.removeOne(imagePath);
 
         // 发出图片列表改变信号
         emit imageListChanged();
 
         // 如果删除的是当前显示的图片，更新当前图片路径
         if (m_strImageSourcePath == imagePath) {
-            if (!m_lstImagePath.isEmpty()) {
-                m_strImageSourcePath = m_lstImagePath.first();
-            } else {
+            if (m_lstImagePath.isEmpty()) {
+                // 列表为空，直接清空路径
                 m_strImageSourcePath = "";
+            } else {
+                // 1. 尝试使用删除前的索引 (originalIndex)
+                int newIndex = originalIndex;
+
+                // 2. 如果删除前索引大于等于列表当前大小（即删除了最后一张），则指向新的最后一张
+                if (newIndex >= m_lstImagePath.size()) {
+                    newIndex = m_lstImagePath.size() - 1;
+                }
+
+                // 3. 设置新的当前图片路径
+                m_strImageSourcePath = m_lstImagePath.at(newIndex);
+                qDebug() << "下一张图片路径：" << m_strImageSourcePath;
             }
             emit imageSourcePathChanged();
         }
@@ -406,6 +421,7 @@ QString CSlide::cropImage(QString imagePath, int x, int y, int width, int height
     // 生成裁剪后图片的文件名（在原文件名基础上添加_cropped后缀）
     QFileInfo fileInfo(imagePath);
     QString croppedImagePath = fileInfo.path() + "/" + fileInfo.completeBaseName() + "_cropped." + fileInfo.suffix();
+    qDebug() << "裁剪后的图片：" << croppedImagePath;
 
     // 保存裁剪后的图片到新文件
     bool saveSuccess = croppedImage.save(croppedImagePath);
@@ -448,3 +464,15 @@ bool CSlide::restoreFromTrash(const QString& filePath)
         return false;
     }
 }
+
+bool CSlide::copyFileOverwrite(const QString &src, const QString &dst)
+{
+    if (QFile::exists(dst)) {
+        if (!QFile::remove(dst)) {
+            qWarning() << "Failed to remove existing file:" << dst;
+            return false;
+        }
+    }
+    return QFile::copy(src, dst);
+}
+

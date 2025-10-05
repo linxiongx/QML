@@ -11,7 +11,15 @@
       "Bash(git commit -m \"$(cat <<''EOF''\n提交ImageInfo插件相关修改\n\n- 更新ImageInfo插件相关文件\n- 完善QML插件配置\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\n更新ImageInfo插件完整配置\n\n- 完善ImageInfo插件C++和QML文件\n- 更新插件配置和元数据\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\n更新Claude本地设置配置\n\n- 调整Claude Code本地设置\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(echo:*)",
+      "Read(//f/**)",
+      "Read(//h/图片/好看/**)",
+      "Bash(stat:*)",
+      "Bash(lsof:*)",
+      "Bash(handle:*)",
+      "Bash(powershell:*)",
+      "Bash(diff:*)"
     ],
     "deny": [],
     "ask": []
