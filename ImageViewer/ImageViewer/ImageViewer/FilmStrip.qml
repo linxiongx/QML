@@ -53,12 +53,26 @@ Item {
         border.color: "#555555"
         border.width: 1
 
+        // 专门处理滚轮事件，阻止冒泡到主窗口但允许胶片栏滚动
+        WheelHandler {
+            id: filmstripAreaWheelHandler
+            target: filmstripArea
+            onWheel: function(event) {
+                // 阻止事件冒泡到主窗口的图片缩放
+                event.accepted = true
+                // 让胶片栏的 ListView 处理滚动
+                if (filmstripListView.flickableItem) {
+                    filmstripListView.flickableItem.contentY -= event.angleDelta.y / 10
+                }
+            }
+        }
+
         // 鼠标区域用于检测鼠标是否在胶片栏内
         MouseArea {
             id: filmstripMouseArea
             anchors.fill: parent
             hoverEnabled: true
-            propagateComposedEvents: true
+            propagateComposedEvents: false  // 阻止事件冒泡
             acceptedButtons: Qt.AllButtons
 
             onEntered: {

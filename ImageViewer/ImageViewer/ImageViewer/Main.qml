@@ -124,6 +124,7 @@ ApplicationWindow
 
         onImageSelected: function(imageSource) {
             idImage.source = imageSource;
+            idImageNext.opacity = 0;  // 确保顶层图片隐藏
             // 重置缩放和位置
             imageScale = 1.0
             imageContainer.x = (idContainer.width - imageContainer.width) / 2
@@ -137,37 +138,28 @@ ApplicationWindow
         function onImageFileSourceChanged(strFilePath)
         {
             if (idSlideToolButton.currentEffect === "flip") {
-                // 先翻转当前图片
+                // 翻转效果：使用翻转动画
+                imageContainer.isCrossFading = false;
+
                 // 计算旋转中心为窗口中心 (idContainer 中心相对于 imageContainer 的偏移)
                 var centerOffsetX = idContainer.width / 2 - imageContainer.x;
                 var centerOffsetY = idContainer.height / 2 - imageContainer.y;
-                idImageRotation.origin.x = centerOffsetX;
-                idImageRotation.origin.y = centerOffsetY;
 
-                idFlipAnimation.start();
-                // 动画完成后切换图片并立即显示 (一次性连接)
-                var flipHandler = function() {
-                    idImage.source = "file:///" + strFilePath;
-                    idImageRotation.angle = 0; // 重置旋转角度
-                    idImage.opacity = 1; // 确保新图片完全显示
-                    // 断开此连接，避免重复
-                    idFlipAnimation.onStopped.disconnect(flipHandler);
-                };
-                idFlipAnimation.onStopped.connect(flipHandler);
+                // 启动翻转动画
+                imageContainer.startFlipAnimation(strFilePath, centerOffsetX, centerOffsetY);
+
+                // 确保顶层图片隐藏
+                idImageNext.opacity = 0;
+
             } else if (idSlideToolButton.currentEffect === "fade") {
-                // 缓入缓出效果
-                idFadeOutAnimation.start();
-                // 淡出动画完成后切换图片并开始淡入 (一次性连接)
-                var fadeHandler = function() {
-                    idImage.source = "file:///" + strFilePath;
-                    idFadeInAnimation.start();
-                    // 断开此连接，避免重复
-                    idFadeOutAnimation.onStopped.disconnect(fadeHandler);
-                };
-                idFadeOutAnimation.onStopped.connect(fadeHandler);
+                // 使用方案2：OpacityAnimator 实现交叉淡入淡出
+                console.log("触发淡入淡出效果，路径:", strFilePath)
+                imageContainer.changeImage(strFilePath);
             } else {
                 // 无效果，直接切换图片
+                imageContainer.isCrossFading = false;
                 idImage.source = "file:///" + strFilePath;
+                idImageNext.opacity = 0;
             }
             // 更新主 CSlide 对象的当前图片路径
             mainCSlide.imageSourceChanged(strFilePath);
@@ -315,12 +307,15 @@ ApplicationWindow
                     }
                 }
 
+                // 底层图片 - 当前显示的图片
                 Image
                 {
                     id: idImage;
                     anchors.fill: parent
                     fillMode: Image.PreserveAspectFit
                     opacity: 1;
+                    z: 1
+                    visible: true
 
                     // 图片加载状态
                     onStatusChanged: {
@@ -334,6 +329,31 @@ ApplicationWindow
                         // 动态设置为窗口中心，将在动画前计算
                         origin.x: imageContainer.width / 2
                         origin.y: imageContainer.height / 2
+                    }
+                }
+
+                // 顶层图片 - 用于淡入淡出效果
+                Image
+                {
+                    id: idImageNext;
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    opacity: 0;
+                    z: 2
+                    visible: true
+
+                    // 图片加载状态
+                    onStatusChanged: {
+                        if (status === Image.Error) {
+                            console.log("次图片加载失败:", source);
+                        }
+                    }
+
+                    transform: Rotation {
+                        id: idImageNextRotation
+                        origin.x: imageContainer.width / 2
+                        origin.y: imageContainer.height / 2
+                        angle: idImageRotation.angle
                     }
                 }
 
@@ -376,55 +396,189 @@ ApplicationWindow
                 }
 
                 // 翻转动画
-                SequentialAnimation
-                {
-                    id: idFlipAnimation;
+                SequentialAnimation {
+                    id: flipAnimation
+                    property string newImagePath: ""
 
-                    ParallelAnimation
-                    {
-                        RotationAnimation
-                        {
-                            target: idImageRotation;
-                            property: "angle";
-                            from: 0;
-                            to: 180;
-                            duration: 500;
-                            easing.type: Easing.InOutQuad;
+                    // 第一步：翻转到90度（图片消失）
+                    RotationAnimation {
+                        target: idImageRotation
+                        property: "angle"
+                        from: 0
+                        to: 90
+                        duration: 250
+                        easing.type: Easing.InQuad
+                    }
+
+                    // 第二步：切换图片
+                    ScriptAction {
+                        script: {
+                            console.log("翻转动画：切换图片到", flipAnimation.newImagePath)
+                            idImage.source = "file:///" + flipAnimation.newImagePath
                         }
+                    }
 
-                        NumberAnimation
-                        {
-                            target: idImage;
-                            property: "opacity";
-                            from: 1;
-                            to: 0;
-                            duration: 500;
+                    // 第三步：从270度翻转回360度（0度）
+                    RotationAnimation {
+                        target: idImageRotation
+                        property: "angle"
+                        from: 270
+                        to: 360
+                        duration: 250
+                        easing.type: Easing.OutQuad
+                    }
+
+                    // 第四步：重置角度为0
+                    ScriptAction {
+                        script: {
+                            idImageRotation.angle = 0
                         }
                     }
                 }
 
-                // 淡出动画
-                NumberAnimation
-                {
-                    id: idFadeOutAnimation;
-                    target: idImage;
-                    property: "opacity";
-                    from: 1;
-                    to: 0;
-                    duration: 500;
-                    easing.type: Easing.OutQuad;
+                // 启动翻转动画的函数
+                function startFlipAnimation(newImagePath, centerOffsetX, centerOffsetY) {
+                    console.log("=== startFlipAnimation 被调用 ===")
+                    console.log("新图片路径:", newImagePath)
+
+                    // 设置旋转中心
+                    idImageRotation.origin.x = centerOffsetX
+                    idImageRotation.origin.y = centerOffsetY
+
+                    // 设置新图片路径并启动动画
+                    flipAnimation.newImagePath = newImagePath
+                    flipAnimation.start()
                 }
 
-                // 淡入动画
-                NumberAnimation
-                {
-                    id: idFadeInAnimation;
-                    target: idImage;
-                    property: "opacity";
-                    from: 0;
-                    to: 1;
-                    duration: 500;
-                    easing.type: Easing.InQuad;
+                // 使用方案2：OpacityAnimator 实现交叉淡入淡出（硬件加速）
+                property string nextImagePath: ""
+                property bool isCrossFading: false  // 添加标志位
+
+                ParallelAnimation {
+                    id: crossFadeAnimation
+
+                    OpacityAnimator {
+                        target: idImage
+                        from: 1
+                        to: 0
+                        duration: 500
+                        easing.type: Easing.OutQuad  // 旧图片缓出
+                    }
+
+                    OpacityAnimator {
+                        target: idImageNext
+                        from: 0
+                        to: 1
+                        duration: 500
+                        easing.type: Easing.InQuad   // 新图片缓入
+                    }
+
+                    onStarted: {
+                        console.log("=== 动画开始 ===")
+                        console.log("idImage opacity:", idImage.opacity, "source:", idImage.source)
+                        console.log("idImageNext opacity:", idImageNext.opacity, "source:", idImageNext.source)
+                        imageContainer.isCrossFading = true  // 设置标志
+                    }
+
+                    onFinished: {
+                        console.log("=== 动画完成 ===")
+                        console.log("idImage opacity:", idImage.opacity)
+                        console.log("idImageNext opacity:", idImageNext.opacity)
+                        // 动画完成后，将新图片内容复制到底层
+                        idImage.source = idImageNext.source
+                        idImage.opacity = 1
+                        idImageNext.opacity = 0
+                        idImageNext.source = ""
+                        imageContainer.isCrossFading = false  // 清除标志
+                        console.log("清理完成")
+                    }
+
+                    onStopped: {
+                        imageContainer.isCrossFading = false  // 确保标志被清除
+                    }
+                }
+
+                // 切换图片的函数
+                function changeImage(newImagePath) {
+                    console.log("=== changeImage 被调用 ===")
+                    console.log("旧图片:", idImage.source)
+                    console.log("新图片路径:", newImagePath)
+
+                    // 如果动画正在运行，先停止
+                    if (crossFadeAnimation.running) {
+                        console.log("停止正在运行的动画")
+                        crossFadeAnimation.stop()
+                        // 清理状态
+                        idImage.source = idImageNext.source
+                        idImage.opacity = 1
+                        idImageNext.opacity = 0
+                    }
+
+                    // *** 关键：在设置 idImageNext.source 之前就设置标志 ***
+                    imageContainer.isCrossFading = true
+                    console.log(">>> 设置 isCrossFading = true，防止 idImage 被修改")
+
+                    // 先加载新图片到顶层（opacity为0，不可见）
+                    var newSource = "file:///" + newImagePath
+                    console.log("设置 idImageNext.source =", newSource)
+                    idImageNext.source = newSource
+
+                    // 强制设置初始状态
+                    idImage.opacity = 1
+                    idImageNext.opacity = 0
+
+                    // 确保两层图片的旋转角度一致
+                    idImageNextRotation.angle = idImageRotation.angle
+
+                    console.log("等待新图片加载，当前状态:", idImageNext.status)
+                    console.log("idImage.source =", idImage.source)
+                    console.log("idImageNext.source =", idImageNext.source)
+
+                    // 定义加载完成后的处理函数
+                    var startAnimationWhenReady = function() {
+                        console.log(">>> 准备开始动画")
+                        console.log(">>> idImage.source =", idImage.source)
+                        console.log(">>> idImageNext.source =", idImageNext.source)
+
+                        // 再次确认两个图片源不同
+                        if (idImage.source === idImageNext.source) {
+                            console.log("!!! 警告：两个图片源相同，取消动画")
+                            imageContainer.isCrossFading = false
+                            return
+                        }
+
+                        // 确保初始状态正确
+                        idImage.opacity = 1
+                        idImageNext.opacity = 0
+
+                        console.log(">>> 现在开始动画")
+                        crossFadeAnimation.start()
+                    }
+
+                    // 等待新图片加载完成后开始动画
+                    if (idImageNext.status === Image.Ready) {
+                        console.log("图片已就绪，立即启动动画流程")
+                        startAnimationWhenReady()
+                    } else if (idImageNext.status === Image.Loading) {
+                        console.log("图片正在加载，等待...")
+                        // 如果正在加载，监听加载完成信号
+                        var loadHandler = function() {
+                            console.log("图片状态变化:", idImageNext.status)
+                            if (idImageNext.status === Image.Ready) {
+                                console.log("图片加载完成")
+                                idImageNext.statusChanged.disconnect(loadHandler)
+                                startAnimationWhenReady()
+                            } else if (idImageNext.status === Image.Error) {
+                                console.log("图片加载失败:", idImageNext.source)
+                                idImageNext.statusChanged.disconnect(loadHandler)
+                                imageContainer.isCrossFading = false
+                            }
+                        }
+                        idImageNext.statusChanged.connect(loadHandler)
+                    } else {
+                        console.log("图片状态异常:", idImageNext.status)
+                        imageContainer.isCrossFading = false
+                    }
                 }
             }
 
@@ -571,8 +725,15 @@ ApplicationWindow
 
         onImageSourcePathChanged: {
             console.log("imageSourcePathChanged - 新路径:", mainCSlide.imageSourcePath);
+
+            // 如果正在进行淡入淡出，不要改变 idImage.source
+            if (imageContainer.isCrossFading) {
+                console.log(">>> 正在进行交叉淡入淡出，跳过 idImage.source 的修改");
+                return;
+            }
+
             if (mainCSlide.imageSourcePath !== "") {
-                // 手动添加file:///前缀
+                // 手动添加 file:///前缀
                 var imagePath = "file:///" + mainCSlide.imageSourcePath;
                 console.log("设置主图片路径:", imagePath);
                 idImage.source = imagePath;
