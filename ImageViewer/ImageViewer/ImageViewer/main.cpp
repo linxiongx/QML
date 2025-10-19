@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    //app.setWindowIcon(QIcon("qrc:/res/favicon.ico"));
+    app.setWindowIcon(QIcon("qrc:/res/favicon.ico"));
     QQmlApplicationEngine engine;
 
     qmlRegisterType<CSlide>("org.example.cslide",1, 0, "CSlide");

@@ -31,6 +31,13 @@ qt_add_qml_module(appImageViewer
         QML_FILES FilmStrip.qml
         SOURCES cslide.h cslide.cpp undomanager.h undomanager.cpp
         QML_FILES RotateToolButton.qml
+        QML_FILES MyToolBar.qml
+        QML_FILES Viewer.qml
+        QML_FILES ImageAnimations.qml
+        QML_FILES ZoomIndicator.qml
+        QML_FILES KeyboardShortcuts.qml
+        QML_FILES CropSelection.qml
+        QML_FILES ImageViewer.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
