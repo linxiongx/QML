@@ -38,6 +38,9 @@ qt_add_qml_module(appImageViewer
         QML_FILES KeyboardShortcuts.qml
         QML_FILES CropSelection.qml
         QML_FILES ImageViewer.qml
+        RESOURCES res/app.png
+        RESOURCES res/skin.png
+        RESOURCES res/skin_black.png
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

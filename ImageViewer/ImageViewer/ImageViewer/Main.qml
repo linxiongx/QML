@@ -14,12 +14,12 @@ ApplicationWindow
     // 设置为无边框窗口，但保留任务栏图标
     flags: Qt.FramelessWindowHint | Qt.Window
 
-    onClosing: {
-        console.log("程序关闭")
-        // 不再需要清理待删除图片，已改为即时删除
-    }
-
     minimumWidth: 500
+
+    // 设置窗口背景颜色
+    color: "#1e1e1e"
+
+    //property color backgroundColor: "#1e1e1e"
 
     // 自定义标题栏
     Rectangle {
@@ -30,6 +30,7 @@ ApplicationWindow
             top: parent.top
             left: parent.left
             right: parent.right
+            rightMargin: 5
         }
 
         // 标题栏拖拽区域
@@ -71,6 +72,62 @@ ApplicationWindow
             }
             spacing: 0
 
+
+            //换肤
+            Rectangle
+            {
+                id: skinButton
+                width: 46
+                height: 30
+                color: skinMouseArea.containsMouse ? "#404040" : "transparent"
+
+                property int index: 0
+
+                Image
+                {
+                    id: skinImage
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    source: Qt.resolvedUrl("res/skin.png");
+                    height: 15;
+                    width: height;
+                    fillMode: Image.PreserveAspectFit
+                }
+
+                MouseArea {
+                    id: skinMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        skinButton.index = (skinButton.index + 1) % 2;
+                        if(skinButton.index === 0)
+                        {
+                            window.color = "#1e1e1e"
+                            titleBar.color  = "#1e1e1e"
+                            minimizeButtonText.color  = "white"
+                            maximizeButtonText.color  = "white"
+                            closeButtonText.color  = "white"
+                            titleText.color  = "white"
+                            skinImage.source = Qt.resolvedUrl("res/skin.png");
+                        }
+                        else if(skinButton.index === 1)
+                        {
+                            window.color = "white"
+                            titleBar.color  = "white"
+                            minimizeButtonText.color  = "#1e1e1e"
+                            maximizeButtonText.color  = "#1e1e1e"
+                            closeButtonText.color  = "#1e1e1e"
+                            titleText.color  = "#1e1e1e"
+                            skinImage.source = Qt.resolvedUrl("res/skin_black.png");
+                        }
+                        else if(skinButton.index === 2)
+                        {
+
+                        }
+                    }
+                }
+            }
+
             // 最小化按钮
             Rectangle {
                 id: minimizeButton
@@ -79,6 +136,7 @@ ApplicationWindow
                 color: minimizeMouseArea.containsMouse ? "#404040" : "transparent"
 
                 Text {
+                    id: minimizeButtonText
                     text: "─"
                     color: "white"
                     font.pixelSize: 12
@@ -103,9 +161,10 @@ ApplicationWindow
                 color: maximizeMouseArea.containsMouse ? "#404040" : "transparent"
 
                 Text {
-                    text: window.visibility === Window.Maximized ? "❐" : "□"
+                    id: maximizeButtonText
+                    text: window.visibility === Window.Maximized ? "❐" : "口"
                     color: "white"
-                    font.pixelSize: 12
+                    font.pixelSize: 14
                     anchors.centerIn: parent
                 }
 
@@ -131,6 +190,7 @@ ApplicationWindow
                 color: closeMouseArea.containsMouse ? "#e81123" : "transparent"
 
                 Text {
+                    id: closeButtonText
                     text: "✕"
                     color: "white"
                     font.pixelSize: 12

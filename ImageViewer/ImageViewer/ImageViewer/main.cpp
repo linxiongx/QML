@@ -3,11 +3,15 @@
 #include <QIcon>
 #include "cslide.h"
 
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-    app.setWindowIcon(QIcon("qrc:/res/favicon.ico"));
+
+    QIcon icon(":/qt/qml/ImageViewer/res/app.png");
+    app.setWindowIcon(icon);
+
     QQmlApplicationEngine engine;
 
     qmlRegisterType<CSlide>("org.example.cslide",1, 0, "CSlide");
