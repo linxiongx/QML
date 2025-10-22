@@ -232,7 +232,13 @@ MyToolButton
         onTriggered:
         {
             var strFilePath = idCSlide.getImageFile();
-            idToolButton.imageFileSourceChanged(strFilePath);
+            if (strFilePath !== "") {
+                idToolButton.imageFileSourceChanged(strFilePath);
+            } else {
+                // 如果没有获取到图片，停止幻灯片播放
+                idSlideTimer.stop();
+                console.log("幻灯片播放结束：没有更多图片");
+            }
         }
     }
 

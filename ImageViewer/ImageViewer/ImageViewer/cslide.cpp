@@ -90,6 +90,11 @@ QString CSlide::getImageFile()
     QString strFile = "";
     int index = m_lstImagePath.indexOf(m_strImageSourcePath);
 
+    // 如果当前图片不在列表中，从第一张开始
+    if (index == -1) {
+        index = 0;
+    }
+
     switch (m_slideType)
     {
     case SlideType::RANDOMIZATION:
@@ -135,7 +140,7 @@ QString CSlide::getImageFile()
     }
     case SlideType::SEQUENCES:
     {
-        index = (++index) % m_lstImagePath.size();
+        index = (index + 1) % m_lstImagePath.size();
         strFile = m_lstImagePath[index];
         break;
     }
@@ -153,6 +158,11 @@ QString CSlide::getPrevImageFile()
 
     QString strFile = "";
     int index = m_lstImagePath.indexOf(m_strImageSourcePath);
+
+    // 如果当前图片不在列表中，从第一张开始
+    if (index == -1) {
+        index = 0;
+    }
 
     switch (m_slideType)
     {
@@ -291,9 +301,15 @@ bool CSlide::deleteImageFile(QString imagePath)
                     newIndex = m_lstImagePath.size() - 1;
                 }
 
-                // 3. 设置新的当前图片路径
-                m_strImageSourcePath = m_lstImagePath.at(newIndex);
-                qDebug() << "下一张图片路径：" << m_strImageSourcePath;
+                // 确保索引在有效范围内
+                if (newIndex >= 0 && newIndex < m_lstImagePath.size()) {
+                    m_strImageSourcePath = m_lstImagePath.at(newIndex);
+                    qDebug() << "下一张图片路径：" << m_strImageSourcePath;
+                } else {
+                    // 如果索引无效，使用第一张图片
+                    m_strImageSourcePath = m_lstImagePath.at(0);
+                    qDebug() << "索引无效，使用第一张图片：" << m_strImageSourcePath;
+                }
             }
             emit imageSourcePathChanged();
         }

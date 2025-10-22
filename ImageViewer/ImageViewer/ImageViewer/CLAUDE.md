@@ -14,13 +14,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 主要组件：
 - **前端**：QML 驱动的 UI，Main.qml 作为入口，集成自定义工具按钮 (MyToolButton, SlideToolButton 等) 和图像显示区域 (ScrollView + Image + DropArea + WheelHandler/MouseArea)。
-- **后端**：C++ 类如 CSlide 处理幻灯片逻辑 (目录扫描、顺序/随机切换)。
+- **后端**：C++ 类如 CSlide 处理幻灯片逻辑 (目录扫描、顺序/随机切换)，UndoManager 处理撤销操作。
 - **集成**：通过 qmlRegisterType 将 CSlide 暴露为 QML 类型 "org.example.cslide"；Q_INVOKABLE 方法和属性绑定实现通信。
 - **资源**：res/ 目录存放图标；构建使用 Qt Quick 和 QuickControls 模块。
 
 关键文件：
-- `Main.qml`：主窗口布局、工具栏、图像交互 (缩放 0.1-10x、拖拽平移、双击重置、翻转动画)。
+- `Main.qml`：主窗口布局、自定义标题栏、窗口管理、换肤功能。
+- `ImageViewer.qml`：核心图片查看组件，包含工具栏、图像显示区域。
 - `cslide.h/cpp`：幻灯片管理 (QDir 扫描 JPG/PNG/GIF，getImageFile 返回下一张)。
+- `undomanager.h/cpp`：撤销管理器，支持删除图片的撤销功能。
 - `ImageInfo/`：插件源代码 (ImageInfoControls.qml 等)。
 - `CMakeLists.txt`：主项目配置，qt_add_executable(appImageViewer) 和 qt_add_qml_module。
 - `main.cpp`：应用入口，注册 CSlide 并加载 QML 模块。
@@ -71,6 +73,11 @@ cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
 
+### Qt Creator 构建
+- 使用 Qt Creator 打开项目文件 `CMakeLists.txt`
+- 选择构建套件（Qt 6.5+，MinGW 64-bit）
+- 构建和运行项目
+
 ### 开发工具和环境设置
 
 - **推荐 IDE**：Qt Creator (最佳 Qt/QML 开发体验)
@@ -108,11 +115,21 @@ Qt Creator 项目配置文件，包含构建套件和调试配置。
 
 ## C++/QML 集成
 
-- CSlide 类：Q_PROPERTY SlideType slideType (SEQUENCES/RANDOMIZATION/PSEUDO_RANDOM, NOTIFY slideTypeChanged)；Q_INVOKABLE imageSourceChanged (扫描目录，填充 QStringList m_lstImagePath)；getImageFile (顺序 index++ 或随机避免重复)。
-- UndoManager 类：处理撤销操作，支持删除图片的撤销功能，最大撤销步数为10。
-- 文件系统：QDir entryList 过滤图片，QFileInfo absolutePath；单文件随机模式返回自身。
-- 信号：slideTypeChanged 用于 QML 更新；Connections 绑定 SlideToolButton 到图像切换。
-- 类型注册：CSlide 注册为 "org.example.cslide" QML 类型。
+- **CSlide 类**：
+  - Q_PROPERTY SlideType slideType (SEQUENCES/RANDOMIZATION/PSEUDO_RANDOM, NOTIFY slideTypeChanged)
+  - Q_INVOKABLE imageSourceChanged (扫描目录，填充 QStringList m_lstImagePath)
+  - Q_INVOKABLE getImageFile/getPrevImageFile (顺序 index++ 或随机避免重复)
+  - Q_INVOKABLE deleteImageFile (删除图片，支持撤销)
+  - Q_INVOKABLE cropImage (基于当前显示区域裁剪图片)
+  - Q_INVOKABLE undoLastDelete/canUndo (撤销管理)
+
+- **UndoManager 类**：处理撤销操作，支持删除图片的撤销功能，最大撤销步数为10。
+
+- **文件系统**：QDir entryList 过滤图片，QFileInfo absolutePath；单文件随机模式返回自身。
+
+- **信号**：slideTypeChanged 用于 QML 更新；Connections 绑定 SlideToolButton 到图像切换。
+
+- **类型注册**：CSlide 注册为 "org.example.cslide" QML 类型。
 
 ## 语言规范
 
@@ -162,11 +179,11 @@ Qt Creator 项目配置文件，包含构建套件和调试配置。
 - 撤销删除：删除图片后可通过 UndoManager 恢复
 
 ### 窗口管理
-- 无边框窗口：使用 Qt.FramelessWindowHint 实现自定义标题栏
-- 自定义标题栏：包含应用标题、换肤按钮、窗口控制按钮（最小化、最大化/还原、关闭）
-- 窗口拖拽：支持通过标题栏拖拽移动窗口
-- 窗口调整大小：支持通过边框和角部调整窗口大小
-- 换肤功能：支持深色和浅色主题切换
+- **无边框窗口**：使用 Qt.FramelessWindowHint 实现自定义标题栏
+- **自定义标题栏**：包含应用标题、换肤按钮、窗口控制按钮（最小化、最大化/还原、关闭）
+- **窗口拖拽**：支持通过标题栏拖拽移动窗口
+- **窗口调整大小**：支持通过边框和角部调整窗口大小
+- **换肤功能**：支持深色和浅色主题切换，同步更新所有UI元素颜色
 
 ### 资源文件结构
 - **res/**：资源目录，包含应用图标
