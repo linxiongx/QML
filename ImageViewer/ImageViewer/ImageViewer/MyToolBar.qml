@@ -21,7 +21,7 @@ Rectangle {
 
     width: parent.width
     height: 30
-    color: "darkgray"
+    color: "#3A3A3A"
 
     // 外部属性接口
     property int marginValue: 5

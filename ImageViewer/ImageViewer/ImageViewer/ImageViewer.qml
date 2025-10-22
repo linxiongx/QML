@@ -78,6 +78,10 @@ Item
                     }
                     mainCSlide.imageSourceChanged(strFilePath)
                 })
+                // 连接幻灯片播放状态改变信号
+                slideButton.slidePlayingChanged.connect(function(isPlaying) {
+                    idImageViewer.setSlidePlaying(isPlaying)
+                })
             }
         }
     }
@@ -196,6 +200,13 @@ Item
         var success = mainCSlide.deleteImageFile(imagePath)
         if (!success) {
             console.log("删除操作失败")
+        }
+    }
+
+    // 设置工具栏颜色函数 - 用于换肤功能
+    function setToolbarColor(color) {
+        if (idToolBarRectangle) {
+            idToolBarRectangle.color = color
         }
     }
 

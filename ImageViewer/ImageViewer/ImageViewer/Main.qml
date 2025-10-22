@@ -19,8 +19,6 @@ ApplicationWindow
     // 设置窗口背景颜色
     color: "#1e1e1e"
 
-    //property color backgroundColor: "#1e1e1e"
-
     // 自定义标题栏
     Rectangle {
         id: titleBar
@@ -30,7 +28,6 @@ ApplicationWindow
             top: parent.top
             left: parent.left
             right: parent.right
-            rightMargin: 5
         }
 
         // 标题栏拖拽区域
@@ -109,6 +106,12 @@ ApplicationWindow
                             closeButtonText.color  = "white"
                             titleText.color  = "white"
                             skinImage.source = Qt.resolvedUrl("res/skin.png");
+                            // 改变工具栏背景颜色为深色
+                            if (imageViewer) {
+                                //imageViewer.setToolbarColor("#2C2F33")
+                               imageViewer.setToolbarColor("#3A3A3A")
+                                // imageViewer.setToolbarColor("#5C5C5C")
+                            }
                         }
                         else if(skinButton.index === 1)
                         {
@@ -119,6 +122,10 @@ ApplicationWindow
                             closeButtonText.color  = "#1e1e1e"
                             titleText.color  = "#1e1e1e"
                             skinImage.source = Qt.resolvedUrl("res/skin_black.png");
+                            // 改变工具栏背景颜色为浅色
+                            if (imageViewer) {
+                                imageViewer.setToolbarColor("lightgray")
+                            }
                         }
                         else if(skinButton.index === 2)
                         {
@@ -212,6 +219,7 @@ ApplicationWindow
     // 主内容区域 - 使用原有的 ImageViewer 组件
     ImageViewer
     {
+        id: imageViewer
         anchors {
             top: titleBar.bottom
             //top:parent.top;

@@ -28,7 +28,7 @@ Rectangle {
     z: 0
 
     // 外部属性接口
-    property url imageSource: ""
+    property url imageSource: Qt.resolvedUrl("res/shortcut.png");
     property real imageScale: 1.0
     property real minScale: 0.1
     property real maxScale: 10.0
@@ -106,6 +106,11 @@ Rectangle {
                         cropStartY = mouse.y
                         cropEndX = mouse.x
                         cropEndY = mouse.y
+                        // 初始化裁剪选区显示
+                        cropRect.startX = cropStartX
+                        cropRect.startY = cropStartY
+                        cropRect.endX = cropEndX
+                        cropRect.endY = cropEndY
                         cropRect.visible = true
                     }
                 }
@@ -114,6 +119,11 @@ Rectangle {
                     if (cropping) {
                         cropEndX = mouse.x
                         cropEndY = mouse.y
+                        // 更新裁剪选区显示
+                        cropRect.startX = cropStartX
+                        cropRect.startY = cropStartY
+                        cropRect.endX = cropEndX
+                        cropRect.endY = cropEndY
                     }
                 }
 

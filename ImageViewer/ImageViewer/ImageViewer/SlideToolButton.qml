@@ -15,10 +15,14 @@ MyToolButton
     required property string imageSource;
     property CSlide slideEngine;
     property string currentEffect: "none";
-    property bool isPlaying: idSlideTimer.running;
+    property bool isPlaying: idSlideTimer.running
+    onIsPlayingChanged: {
+        slidePlayingChanged(isPlaying)
+    }
     property int slideInterval: idSlideTimer.interval;
 
     signal imageFileSourceChanged(string strFilePath);
+    signal slidePlayingChanged(bool isPlaying);
 
     onImageSourceChanged:
     {
