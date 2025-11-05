@@ -38,6 +38,7 @@ qt_add_qml_module(appImageViewer
         QML_FILES KeyboardShortcuts.qml
         QML_FILES CropSelection.qml
         QML_FILES ImageViewer.qml
+        QML_FILES SetWallpaperToolButton.qml
         RESOURCES res/app.png
         RESOURCES res/skin.png
         RESOURCES res/skin_black.png
@@ -58,6 +59,15 @@ set_target_properties(appImageViewer PROPERTIES
 target_link_libraries(appImageViewer
     PRIVATE Qt6::Quick
 )
+
+# Windows 平台需要链接额外的系统库用于设置桌面背景
+if(WIN32)
+    target_link_libraries(appImageViewer
+        PRIVATE
+        user32
+        shell32
+    )
+endif()
 
 include(GNUInstallDirs)
 install(TARGETS appImageViewer

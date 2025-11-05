@@ -14,6 +14,9 @@ Item
     property real maxScale: 10.0
     property real scaleStep: 0.1
 
+    // 初始图片路径属性
+    property string initialImagePath
+
     // background: Rectangle {
     //     color: "lightblue"   // 这里改颜色
     // }
@@ -54,6 +57,12 @@ Item
             idImageViewer.imageSource = imageSource
             // 重置缩放和位置
             idImageViewer.resetZoom()
+            // 通知幻灯片引擎当前图片已更改
+            if (mainCSlide) {
+                // 移除 file:/// 前缀
+                var cleanPath = imageSource.toString().replace("file:///", "")
+                mainCSlide.imageSourceChanged(cleanPath)
+            }
         }
     }
 
@@ -210,6 +219,34 @@ Item
         }
     }
 
+    // 初始化定时器 - 处理初始图片路径
+    Timer {
+        id: initTimer
+        interval: 100
+        running: true
+        repeat: false
+        onTriggered: {
+            console.log("ImageViewer.qml 初始化定时器触发")
+            console.log("root.initialImagePath:", root.initialImagePath)
+            if (root.initialImagePath && root.initialImagePath !== "") {
+                console.log("加载初始图片:", root.initialImagePath)
+                // 直接设置图片源，避免先显示默认图片
+                var imagePath = "file:///" + root.initialImagePath
+                console.log("直接设置图片路径:", imagePath)
+                idImageViewer.imageSource = imagePath
+                // 同时调用幻灯片引擎以构建图片列表
+                if (mainCSlide) {
+                    console.log("调用 mainCSlide.imageSourceChanged:", root.initialImagePath)
+                    mainCSlide.imageSourceChanged(root.initialImagePath)
+                }
+            } else {
+                // 如果没有命令行参数，则显示默认图片
+                console.log("没有命令行参数，显示默认图片")
+                idImageViewer.imageSource = Qt.resolvedUrl("res/shortcut.png")
+            }
+        }
+    }
+
     CSlide {
         id: mainCSlide
 
@@ -222,17 +259,26 @@ Item
                 return
             }
 
-            if (mainCSlide.imageSourcePath !== "") {
+            // 检查当前图片是否已经是我们想要的图片
+            var currentPath = idImageViewer.imageSource.toString().replace("file:///", "")
+            var newPath = mainCSlide.imageSourcePath
+
+            // 标准化路径格式进行比较
+            currentPath = currentPath.replace(/\\/g, "/")
+            newPath = newPath.replace(/\\/g, "/")
+
+            console.log("路径比较 - 当前:", currentPath, "新:", newPath)
+
+            if (currentPath !== newPath && newPath !== "") {
                 // 手动添加 file:///前缀
-                var imagePath = "file:///" + mainCSlide.imageSourcePath
+                var imagePath = "file:///" + newPath
                 console.log("设置主图片路径:", imagePath)
                 idImageViewer.imageSource = imagePath
+                //图片居中
+                idImageViewer.resetZoom()
             } else {
-                idImageViewer.imageSource = ""
+                console.log("路径相同，跳过设置")
             }
-
-            //图片居中
-            idImageViewer.resetZoom()
         }
     }
 

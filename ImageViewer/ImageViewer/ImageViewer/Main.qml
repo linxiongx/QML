@@ -11,6 +11,9 @@ ApplicationWindow
     visible: true
     title: qsTr("图片浏览器")
 
+    // 接收命令行传入的初始图片路径
+    property string initialImagePath: Qt.application.arguments.length > 1 ? Qt.application.arguments[1] : ""
+
     // 设置为无边框窗口，但保留任务栏图标
     // 使用组合标志来改善任务栏集成
     flags: Qt.FramelessWindowHint | Qt.Window | Qt.WindowMinimizeButtonHint
@@ -27,19 +30,19 @@ ApplicationWindow
 
     // 监听窗口可见性变化
     onVisibilityChanged: {
-        console.log("窗口可见性变化:", visibility)
+        console.log("窗口可见性变化:", window.visibility)
 
         // 记录窗口状态
-        if (visibility === Window.Minimized) {
+        if (window.visibility === Window.Minimized) {
             wasMinimized = true
-        } else if (visibility === Window.Maximized) {
+        } else if (window.visibility === Window.Maximized) {
             wasMaximized = true
             wasMinimized = false
-        } else if (visibility === Window.Windowed) {
+        } else if (window.visibility === Window.Windowed) {
             wasMaximized = false
             wasMinimized = false
         }
-        lastVisibility = visibility
+        lastVisibility = window.visibility
     }
 
     // 监听窗口激活状态变化
@@ -435,6 +438,7 @@ ApplicationWindow
             right: parent.right
             bottom: parent.bottom
         }
+        initialImagePath: window.initialImagePath
     }
 
     // 窗口边框调整大小区域 - 使用 Qt 原生方法

@@ -7,6 +7,13 @@
 #include <QUrl>
 #include <QImage>
 #include <QPainter>
+#include <QStandardPaths>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <shlobj.h>
+#include <winreg.h>
+#endif
 
 CSlide::CSlide(QObject *parent)
     : QObject{parent}
@@ -36,13 +43,19 @@ void CSlide::setSlideType(SlideType newSlideType)
 
 void CSlide::imageSourceChanged(QString strImagePath)
 {
+    qDebug() << "CSlide::imageSourceChanged 被调用，传入路径:" << strImagePath;
 
     // 移除file:///前缀
     strImagePath.remove("file:///");
+    qDebug() << "移除 file:/// 前缀后:" << strImagePath;
 
     // 解码URL编码的路径（QML传递的路径是编码过的）
     strImagePath = QUrl::fromPercentEncoding(strImagePath.toUtf8());
+    qDebug() << "URL解码后:" << strImagePath;
 
+    // 标准化路径格式（Windows上统一使用正斜杠）
+    strImagePath = QDir::fromNativeSeparators(strImagePath);
+    qDebug() << "标准化路径后:" << strImagePath;
 
     QFile imageFile(strImagePath);
     if(imageFile.exists() == false)
@@ -51,14 +64,14 @@ void CSlide::imageSourceChanged(QString strImagePath)
         return ;
     }
 
-    // 即使路径相同，也强制更新图片列表
-    // 因为胶片栏需要获取当前目录的所有图片
+    // 保存原始路径
+    QString originalPath = m_strImageSourcePath;
     m_strImageSourcePath = strImagePath;
-    emit imageSourcePathChanged();
+    qDebug() << "原始路径:" << originalPath << "新路径:" << m_strImageSourcePath;
 
     QFileInfo fileInfo(strImagePath);
-
     QString strDirectoryPath = fileInfo.absolutePath();
+    qDebug() << "目录路径:" << strDirectoryPath;
 
     QDir directory(strDirectoryPath);
     if(!directory.exists())
@@ -70,6 +83,7 @@ void CSlide::imageSourceChanged(QString strImagePath)
     m_lstImagePath.clear();
 
     auto lstImagePathTemp = directory.entryList(QDir::Files);
+    qDebug() << "目录中文件数量:" << lstImagePathTemp.size();
 
     for(auto iter = lstImagePathTemp.begin(); iter != lstImagePathTemp.end(); ++iter)
     {
@@ -77,8 +91,28 @@ void CSlide::imageSourceChanged(QString strImagePath)
         if(fileExtension == "jpg" || fileExtension == "png" || fileExtension ==  "gif")
         {
             QString fullPath = strDirectoryPath + "/" + (*iter);
+            fullPath = QDir::fromNativeSeparators(fullPath); // 标准化路径
             m_lstImagePath.append(fullPath);
+            qDebug() << "添加到图片列表:" << fullPath;
         }
+    }
+
+    qDebug() << "图片列表构建完成，包含" << m_lstImagePath.size() << "个文件";
+    qDebug() << "当前图片是否在列表中:" << m_lstImagePath.contains(m_strImageSourcePath);
+
+    // 确保当前图片路径在新的图片列表中
+    if (!m_lstImagePath.contains(m_strImageSourcePath) && !m_lstImagePath.isEmpty()) {
+        // 如果当前图片不在新列表中，使用第一张图片
+        qDebug() << "当前图片不在列表中，使用第一张图片:" << m_lstImagePath.first();
+        m_strImageSourcePath = m_lstImagePath.first();
+    }
+
+    // 只有在路径确实改变时才发出信号
+    if (originalPath != m_strImageSourcePath) {
+        qDebug() << "路径已改变，发出 imageSourcePathChanged 信号";
+        emit imageSourcePathChanged();
+    } else {
+        qDebug() << "路径未改变，不发出信号";
     }
 }
 
@@ -490,5 +524,162 @@ bool CSlide::copyFileOverwrite(const QString &src, const QString &dst)
         }
     }
     return QFile::copy(src, dst);
+}
+
+bool CSlide::setAsWallpaper(QString imagePath, int clickCount)
+{
+    if (imagePath.isEmpty()) {
+        qWarning() << "图片路径为空，无法设置桌面背景";
+        return false;
+    }
+
+    // 确保路径格式正确
+    QFileInfo fileInfo(imagePath);
+    if (!fileInfo.exists()) {
+        qWarning() << "图片文件不存在:" << imagePath;
+        return false;
+    }
+
+    // 检查文件格式是否支持作为桌面背景
+    QString suffix = fileInfo.suffix().toLower();
+    if (suffix != "jpg" && suffix != "jpeg" && suffix != "png" && suffix != "bmp") {
+        qWarning() << "不支持的图片格式作为桌面背景:" << suffix;
+        return false;
+    }
+
+    // 根据点击次数获取平铺模式
+    WallpaperStyle style = getWallpaperStyleFromClickCount(clickCount);
+    QString styleName = getWallpaperStyleName(clickCount);
+
+    // 记录设置操作
+    qDebug() << "开始设置桌面背景，图片路径:" << fileInfo.absoluteFilePath();
+    qDebug() << "点击次数:" << clickCount << "，平铺模式:" << styleName;
+
+    return setDesktopWallpaper(fileInfo.absoluteFilePath(), style);
+}
+
+bool CSlide::setDesktopWallpaper(const QString& imagePath, WallpaperStyle style)
+{
+#ifdef Q_OS_WIN
+    // Windows 平台实现
+    std::wstring wImagePath = imagePath.toStdWString();
+
+    qDebug() << "调用 Windows API 设置桌面背景:" << imagePath;
+
+    // 首先设置图片路径
+    BOOL result = SystemParametersInfoW(
+        SPI_SETDESKWALLPAPER,    // 设置桌面背景
+        0,                       // 未使用
+        (LPVOID)wImagePath.c_str(), // 图片文件路径
+        SPIF_UPDATEINIFILE | SPIF_SENDCHANGE  // 更新配置并通知系统
+    );
+
+    if (result) {
+        // 设置平铺样式
+        int wallpaperStyle = 0;
+        // 平铺开关标志
+        int tileWallpaper = 0;
+
+        switch (style) {
+            case STRETCH:  // 拉伸
+                wallpaperStyle = 2;
+                tileWallpaper = 0;
+                break;
+            case TILE:     // 平铺
+                wallpaperStyle = 0;
+                tileWallpaper = 1;  // 启用平铺
+                break;
+            case CENTER:   // 居中
+                wallpaperStyle = 0;
+                tileWallpaper = 0;
+                break;
+            case FIT:      // 适应
+                wallpaperStyle = 6;
+                tileWallpaper = 0;
+                break;
+            default:
+                wallpaperStyle = 2; // 默认拉伸
+                tileWallpaper = 0;
+                break;
+        }
+
+        // 通过注册表设置壁纸样式
+        HKEY hKey;
+        LONG regResult = RegOpenKeyExW(HKEY_CURRENT_USER,
+                                       L"Control Panel\\Desktop",
+                                       0, KEY_WRITE, &hKey);
+        if (regResult == ERROR_SUCCESS) {
+            // 设置壁纸样式
+            std::wstring styleValue = std::to_wstring(wallpaperStyle);
+            RegSetValueExW(hKey, L"WallpaperStyle", 0, REG_SZ,
+                          (BYTE*)styleValue.c_str(),
+                          (styleValue.length() + 1) * sizeof(wchar_t));
+
+            // 设置平铺开关
+            std::wstring tileValue = std::to_wstring(tileWallpaper);
+            RegSetValueExW(hKey, L"TileWallpaper", 0, REG_SZ,
+                          (BYTE*)tileValue.c_str(),
+                          (tileValue.length() + 1) * sizeof(wchar_t));
+
+            RegCloseKey(hKey);
+
+            // 通知系统壁纸样式已更改
+            SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, NULL,
+                                 SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+        }
+
+        qDebug() << "桌面背景设置成功:" << imagePath << "，平铺模式:" << getWallpaperStyleName(static_cast<int>(style));
+        return true;
+    } else {
+        DWORD error = GetLastError();
+        qWarning() << "桌面背景设置失败，错误代码:" << error;
+
+        // 提供更详细的错误信息
+        switch (error) {
+            case ERROR_INVALID_PARAMETER:
+                qWarning() << "错误：无效参数";
+                break;
+            case ERROR_ACCESS_DENIED:
+                qWarning() << "错误：访问被拒绝，可能需要管理员权限";
+                break;
+            case ERROR_FILE_NOT_FOUND:
+                qWarning() << "错误：文件未找到";
+                break;
+            default:
+                qWarning() << "错误：未知错误";
+                break;
+        }
+        return false;
+    }
+#else
+    // 其他平台暂不支持
+    qWarning() << "当前平台不支持设置桌面背景功能";
+    return false;
+#endif
+}
+
+CSlide::WallpaperStyle CSlide::getWallpaperStyleFromClickCount(int clickCount)
+{
+    // 循环模式：拉伸 → 平铺 → 居中 → 适应
+    int styleIndex = clickCount % 4;
+    switch (styleIndex) {
+        case 0: return STRETCH;  // 第1次点击（或第5、9次...）
+        case 1: return TILE;     // 第2次点击（或第6、10次...）
+        case 2: return CENTER;   // 第3次点击（或第7、11次...）
+        case 3: return FIT;      // 第4次点击（或第8、12次...）
+        default: return STRETCH; // 默认
+    }
+}
+
+QString CSlide::getWallpaperStyleName(int clickCount)
+{
+    WallpaperStyle style = getWallpaperStyleFromClickCount(clickCount);
+    switch (style) {
+        case STRETCH: return "拉伸";
+        case TILE: return "平铺";
+        case CENTER: return "居中";
+        case FIT: return "适应";
+        default: return "拉伸";
+    }
 }
 

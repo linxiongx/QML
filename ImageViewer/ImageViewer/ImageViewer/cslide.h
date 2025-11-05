@@ -19,6 +19,15 @@ public:
     };
     Q_ENUM(SlideType)
 
+    enum WallpaperStyle
+    {
+        STRETCH = 0,    // 拉伸
+        TILE = 1,       // 平铺
+        CENTER = 2,     // 居中
+        FIT = 3         // 适应
+    };
+    Q_ENUM(WallpaperStyle)
+
     Q_PROPERTY(SlideType slideType READ slideType WRITE setSlideType NOTIFY slideTypeChanged)
     Q_PROPERTY(QString imageSourcePath READ imageSourcePath NOTIFY imageSourcePathChanged)
 
@@ -35,10 +44,14 @@ public:
     Q_INVOKABLE QString cropImage(QString imagePath, int x, int y, int width, int height, int containerWidth, int containerHeight, double imageScale);
     Q_INVOKABLE bool undoLastDelete(); // 撤销最后一次删除
     Q_INVOKABLE bool canUndo() const; // 检查是否可以撤销
+    Q_INVOKABLE bool setAsWallpaper(QString imagePath, int clickCount = 0); // 设置图片为桌面背景，支持多种平铺模式
+    Q_INVOKABLE QString getWallpaperStyleName(int clickCount); // 获取平铺模式名称
 
 private:
     bool restoreFromTrash(const QString& filePath); // 从回收站恢复文件
     bool copyFileOverwrite(const QString &src, const QString &dst); //移动文件，如果文件存在则覆盖
+    bool setDesktopWallpaper(const QString& imagePath, WallpaperStyle style); // 设置系统桌面背景的私有实现
+    WallpaperStyle getWallpaperStyleFromClickCount(int clickCount); // 根据点击次数获取平铺模式
 
 signals:
     void slideTypeChanged();

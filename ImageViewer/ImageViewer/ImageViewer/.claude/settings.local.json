@@ -19,7 +19,10 @@
       "Bash(lsof:*)",
       "Bash(handle:*)",
       "Bash(powershell:*)",
-      "Bash(diff:*)"
+      "Bash(diff:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

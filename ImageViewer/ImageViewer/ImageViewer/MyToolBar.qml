@@ -60,6 +60,26 @@ Rectangle {
             imageSource: toolBar.imageSource
             slideEngine: toolBar.slideEngine
         }
+
+        // 设置桌面背景按钮
+        SetWallpaperToolButton {
+            id: wallpaperButton
+            slideEngine: toolBar.slideEngine
+            onWallpaperRequested: function(clickCount) {
+                if (toolBar.slideEngine && toolBar.imageSource !== "") {
+                    var imagePath = toolBar.imageSource.toString().replace("file:///", "")
+                    console.log("尝试设置桌面背景，图片路径:", imagePath)
+                    var success = toolBar.slideEngine.setAsWallpaper(imagePath, clickCount)
+                    if (success) {
+                        console.log("桌面背景设置成功:", imagePath)
+                    } else {
+                        console.log("桌面背景设置失败:", imagePath)
+                    }
+                } else {
+                    console.log("无有效图片或幻灯片引擎，无法设置桌面背景")
+                }
+            }
+        }
     }
 
     // 重置旋转角度的函数
@@ -71,5 +91,17 @@ Rectangle {
     // 获取幻灯片按钮引用的函数
     function findSlideButton() {
         return slideButton
+    }
+
+    // 更新桌面背景按钮状态的函数
+    function updateWallpaperButton() {
+        if (wallpaperButton) {
+            wallpaperButton.updateImagePath(toolBar.imageSource)
+        }
+    }
+
+    // 监听图片源变化，更新桌面背景按钮状态
+    onImageSourceChanged: {
+        updateWallpaperButton()
     }
 }

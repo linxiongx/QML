@@ -26,14 +26,13 @@ MyToolButton
 
     onImageSourceChanged:
     {
-        id:idCSlide.imageSourceChanged(imageSource);
+        if (slideEngine) {
+            slideEngine.imageSourceChanged(imageSource);
+        }
     }
 
-    CSlide
-    {
-        id: idCSlide;
-        slideType: CSlide.SEQUENCES;
-    }
+    // 使用外部传入的 slideEngine 而不是创建新的 CSlide 实例
+    // 这样可以确保键盘快捷键和幻灯片播放使用同一个图片列表和状态
 
     ButtonGroup
     {
@@ -53,12 +52,14 @@ MyToolButton
     {
         id: idMenu;
 
+        width: 180
+
         palette.window: "#505050"
 
         property int marginValue: 0;
 
         y: idToolButton.y + idToolButton.height + marginValue;
-        x: idToolButton.x - 60;
+        x: idToolButton.x - 130;
 
         MyMenuItem
         {
@@ -157,7 +158,9 @@ MyToolButton
             ButtonGroup.group: idLoopGroup;
             onTriggered:
             {
-                idCSlide.slideType = CSlide.SEQUENCES;
+                if (slideEngine) {
+                    slideEngine.slideType = CSlide.SEQUENCES;
+                }
             }
         }
 
@@ -167,7 +170,9 @@ MyToolButton
             ButtonGroup.group: idLoopGroup;
             onTriggered:
             {
-                idCSlide.slideType = CSlide.RANDOMIZATION;
+                if (slideEngine) {
+                    slideEngine.slideType = CSlide.RANDOMIZATION;
+                }
             }
         }
 
@@ -177,7 +182,9 @@ MyToolButton
             ButtonGroup.group: idLoopGroup;
             onTriggered:
             {
-                idCSlide.slideType = CSlide.PSEUDO_RANDOM;
+                if (slideEngine) {
+                    slideEngine.slideType = CSlide.PSEUDO_RANDOM;
+                }
             }
         }
 
@@ -231,7 +238,10 @@ MyToolButton
         interval: 3000;
         onTriggered:
         {
-            var strFilePath = idCSlide.getImageFile();
+            var strFilePath = "";
+            if (slideEngine) {
+                strFilePath = slideEngine.getImageFile();
+            }
             if (strFilePath !== "") {
                 idToolButton.imageFileSourceChanged(strFilePath);
             } else {
