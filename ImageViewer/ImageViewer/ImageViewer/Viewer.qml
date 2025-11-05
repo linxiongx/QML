@@ -28,13 +28,17 @@ Rectangle {
     z: 0
 
     // 外部属性接口
-    property url imageSource: Qt.resolvedUrl("res/shortcut.png");
+    property url imageSource: ""
     property real imageScale: 1.0
     property real minScale: 0.1
     property real maxScale: 10.0
     property real scaleStep: 0.1
     property var slideEngine: null
     property int currentRotationAngle: 0
+
+    onImageSourceChanged: {
+        console.log("Viewer.qml imageSource 改变:", imageSource)
+    }
 
     // 裁剪相关属性
     property bool canCrop: !isSlidePlayingInternal && currentRotationAngle === 0
@@ -50,12 +54,16 @@ Rectangle {
     signal imageCropped(string croppedPath)
     signal imageRotated(int angle)
 
-    // 双击容器还原功能
+    // 双击容器智能切换功能
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
         onDoubleClicked: {
-            resetZoom()
+            if (isInitialState()) {
+                showActualSize()
+            } else {
+                resetZoom()
+            }
         }
     }
 
@@ -70,8 +78,8 @@ Rectangle {
 
         Item {
             id: imageContainer
-            width: Math.min(idImage.sourceSize.width, imageViewer.width - 20) * imageScale
-            height: Math.min(idImage.sourceSize.height, imageViewer.height - 20) * imageScale
+            width: idImage.sourceSize.width * imageScale
+            height: idImage.sourceSize.height * imageScale
             x: (imageViewer.width - width) / 2
             y: (imageViewer.height - height) / 2
 
@@ -146,7 +154,11 @@ Rectangle {
                 }
 
                 onDoubleClicked: {
-                    resetZoom()
+                    if (isInitialState()) {
+                        showActualSize()
+                    } else {
+                        resetZoom()
+                    }
                 }
             }
 
@@ -268,13 +280,52 @@ Rectangle {
         }
     }
 
-    // 重置缩放和位置
+    // 重置缩放和位置（适应窗口大小）
     function resetZoom() {
-        imageScale = 1.0
+        if (idImage.sourceSize.width > 0 && idImage.sourceSize.height > 0) {
+            // 计算适合窗口的缩放比例
+            var scaleX = width / idImage.sourceSize.width
+            var scaleY = height / idImage.sourceSize.height
+            var fitScale = Math.min(scaleX, scaleY)
+
+            // 确保缩放比例在允许范围内
+            imageScale = Math.max(minScale, Math.min(maxScale, fitScale))
+        } else {
+            imageScale = 1.0
+        }
+
         currentRotationAngle = 0
         imageRotation.angle = 0
         imageContainer.x = (width - imageContainer.width) / 2
         imageContainer.y = (height - imageContainer.height) / 2
+    }
+
+    // 判断图片是否处于初始状态（适应窗口大小）
+    function isInitialState() {
+        if (idImage.sourceSize.width > 0 && idImage.sourceSize.height > 0) {
+            var scaleX = width / idImage.sourceSize.width
+            var scaleY = height / idImage.sourceSize.height
+            var fitScale = Math.min(scaleX, scaleY)
+
+            return Math.abs(imageScale - fitScale) < 0.01 &&
+                   imageContainer.x === (width - imageContainer.width) / 2 &&
+                   imageContainer.y === (height - imageContainer.height) / 2
+        }
+        return imageScale === 1.0 &&
+               imageContainer.x === (width - imageContainer.width) / 2 &&
+               imageContainer.y === (height - imageContainer.height) / 2
+    }
+
+    // 按实际尺寸显示图片（1:1像素比例）
+    function showActualSize() {
+        if (idImage.sourceSize.width > 0 && idImage.sourceSize.height > 0) {
+            // 设置为1:1的实际像素尺寸
+            imageScale = 1.0
+
+            // 居中显示
+            imageContainer.x = (width - imageContainer.width) / 2
+            imageContainer.y = (height - imageContainer.height) / 2
+        }
     }
 
     // 执行裁剪操作
