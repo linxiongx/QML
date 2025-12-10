@@ -41,8 +41,8 @@
 
 ### ✂️ 图片操作
 - **图片裁剪**：基于当前显示区域进行图片裁剪，支持右键拖拽选区
-- **撤销删除**：删除图片后可通过UndoManager恢复，最多支持10步撤销
-- **图片信息**：通过ImageInfo插件读取图片元数据（EXIF信息）
+- **撤销删除**：删除图片后可通过Ctrl+z恢复，最多支持10步撤销
+
 
 ### 🪟 窗口管理
 - **无边框窗口**：自定义标题栏设计
@@ -61,104 +61,6 @@
 ![幻灯片播放](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/423757959-08fcca63-efbd-4e9f-a388-c9bac8d80526.png)
 
 ![快捷键说明](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ImageViewer/res/shortcut.png)
-
-## 🏗️ 技术架构
-
-### 项目结构
-```
-ImageViewer/
-├── ImageViewer/          # 主应用程序
-│   ├── Main.qml         # 主窗口（自定义标题栏、窗口管理）
-│   ├── ImageViewer.qml  # 图片查看组件容器
-│   ├── Viewer.qml       # 图片显示和交互核心组件
-│   ├── FilmStrip.qml    # 左侧胶片栏组件
-│   ├── MyToolBar.qml    # 工具栏组件
-│   ├── cslide.h/cpp     # 幻灯片管理类
-│   ├── undomanager.h/cpp # 撤销管理器
-│   └── main.cpp         # 应用入口
-├── ImageInfo/           # QML插件项目
-│   └── ImageInfoControls.qml # 图片信息控件
-└── res/                 # 资源文件
-    ├── favicon.ico      # 应用程序图标
-    └── shortcut.png     # 快捷键说明图片
-```
-
-### 核心技术
-- **Qt 6.5+**：使用 Qt Quick 和 QuickControls 模块
-- **QML/C++集成**：通过 `qmlRegisterType` 将 C++ 类暴露为 QML 类型
-- **模块化设计**：组件高度模块化，职责单一
-- **动画系统**：使用 Qt Quick 动画框架，支持多种切换效果
-- **虚拟滚动**：胶片栏使用 ListView 虚拟滚动优化性能
-
-## 🚀 构建和运行
-
-### 环境要求
-- Qt 6.5 或更高版本
-- CMake 3.16 或更高版本
-- C++17 兼容编译器
-
-### 构建命令
-```bash
-# 从 ImageViewer/ImageViewer 目录构建主应用程序
-mkdir -p build && cd build
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-```
-
-### 运行应用程序
-```bash
-# Windows
-./build/appImageViewer.exe
-```
-
-### 快速构建
-```bash
-# 使用 Ninja 快速构建
-cd build && ninja
-```
-
-### 构建 ImageInfo 插件
-```bash
-# 从 ImageInfo 目录构建插件
-cd ImageInfo
-mkdir -p build && cd build
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-```
-
-## 📦 插件系统
-
-项目包含一个独立的 QML 插件项目 `ImageInfo`，用于读取图片元数据（如 EXIF 信息）。
-
-**插件模块 URI**: `org.example.myplugins`
-
-**使用方法**：
-```qml
-import org.example.myplugins 1.0
-
-ImageInfoControls {
-    // 显示图片信息
-}
-```
-
-## 🔧 开发指南
-
-### 项目配置
-- **主项目 QML 模块 URI**: `ImageViewer` v1.0
-- **C++ 类型注册**: `org.example.cslide` v1.0
-- **插件模块 URI**: `org.example.myplugins` v1.0
-
-### 代码风格
-- 使用 Qt 官方推荐的 QML 编码规范
-- 组件命名采用驼峰命名法
-- 信号命名以 `Changed` 结尾
-- 属性使用 `Q_PROPERTY` 声明
-
-### 扩展开发
-1. **添加新功能**：创建独立的 QML 组件
-2. **集成 C++ 逻辑**：通过 `qmlRegisterType` 注册新类型
-3. **添加动画效果**：使用 Qt Quick 动画框架
-4. **优化性能**：使用虚拟滚动和懒加载
 
 ## 🤝 贡献指南
 
