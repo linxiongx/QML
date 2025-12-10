@@ -9,3 +9,5 @@
 
 
 ![image](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/423757959-08fcca63-efbd-4e9f-a388-c9bac8d80526.png)
+
+![image](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ImageViewer/res/shortcut.png)
