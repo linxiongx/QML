@@ -8,6 +8,9 @@ Item {
     property CSlide slideEngine
     property string currentImageSource: ""
 
+    // 暴露给外部的属性，表示胶片栏是否处于展开状态
+    readonly property bool isOpen: filmstripArea.width > 0
+
     signal imageSelected(string imageSource)
 
     // 热区 MouseArea - 窗口左边缘检测

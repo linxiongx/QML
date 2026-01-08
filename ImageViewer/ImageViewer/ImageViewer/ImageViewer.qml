@@ -14,6 +14,25 @@ Item
     property real maxScale: 10.0
     property real scaleStep: 0.1
 
+    // 导航功能函数
+    function showNextImage() {
+        var nextImage = mainCSlide.getImageFile()
+        if (nextImage !== "") {
+            idImageViewer.imageSource = "file:///" + nextImage
+            idImageViewer.resetZoom()
+            mainCSlide.imageSourceChanged(nextImage)
+        }
+    }
+
+    function showPrevImage() {
+        var prevImage = mainCSlide.getPrevImageFile()
+        if (prevImage !== "") {
+            idImageViewer.imageSource = "file:///" + prevImage
+            idImageViewer.resetZoom()
+            mainCSlide.imageSourceChanged(prevImage)
+        }
+    }
+
     // 初始图片路径属性
     property string initialImagePath
 
@@ -144,21 +163,11 @@ Item
         imageContainer: idImageViewer
 
         onNextImageRequested: {
-            var nextImage = mainCSlide.getImageFile()
-            if (nextImage !== "") {
-                idImageViewer.imageSource = "file:///" + nextImage
-                idImageViewer.resetZoom()
-                mainCSlide.imageSourceChanged(nextImage)
-            }
+            root.showNextImage()
         }
 
         onPrevImageRequested: {
-            var prevImage = mainCSlide.getPrevImageFile()
-            if (prevImage !== "") {
-                idImageViewer.imageSource = "file:///" + prevImage
-                idImageViewer.resetZoom()
-                mainCSlide.imageSourceChanged(prevImage)
-            }
+            root.showPrevImage()
         }
 
         onZoomInRequested: {
@@ -294,6 +303,17 @@ Item
         visible: false
         imageSource: idImageViewer.imageSource
         scaleValue: Math.round(root.imageScale * 100)
+    }
+
+    // 鼠标导航箭头
+    NavigationArrows {
+        id: navigationArrows
+        z: 2000 // 确保在顶层
+        
+        filmStripOpen: filmStrip.isOpen
+
+        onPrevClicked: root.showPrevImage()
+        onNextClicked: root.showNextImage()
     }
 
 }

@@ -10,6 +10,7 @@ qt_standard_project_setup(REQUIRES 6.5)
 
 qt_add_executable(appImageViewer
     main.cpp
+    windows_icon.rc
 )
 
 qt_add_qml_module(appImageViewer
@@ -43,6 +44,8 @@ qt_add_qml_module(appImageViewer
         RESOURCES res/skin.png
         RESOURCES res/skin_black.png
         RESOURCES res/shortcut.png
+        QML_FILES NavigationArrows.qml
+        RESOURCES res/app.ico
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
