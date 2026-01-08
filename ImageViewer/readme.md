@@ -56,9 +56,9 @@
 
 ## 🖼️ 应用截图
 
-![主界面](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/420787754-a4f358a6-a136-4f1c-b616-525fc001b6cd.png)
+![主界面](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/1.png)
 
-![幻灯片播放](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/423757959-08fcca63-efbd-4e9f-a388-c9bac8d80526.png)
+![幻灯片播放](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ReleaseImage/2.png)
 
 ![快捷键说明](https://github.com/linxiongx/QML/blob/main/ImageViewer/ImageViewer/ImageViewer/res/shortcut.png)
 
