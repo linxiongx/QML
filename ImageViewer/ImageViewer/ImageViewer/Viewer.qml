@@ -32,6 +32,7 @@ Rectangle {
     // 局部放大镜状态
     property bool magnifierActive: false
     property point mousePosition: Qt.point(0, 0)
+    property real magnifierSize: 200 // 默认放大镜尺寸
 
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Control) {
@@ -86,6 +87,7 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
+        cursorShape: magnifierActive ? Qt.BlankCursor : Qt.ArrowCursor
         onDoubleClicked: {
             if (isInitialState()) {
                 showActualSize()
@@ -117,7 +119,9 @@ Rectangle {
                 id: dragMouseArea
                 anchors.fill: parent
                 cursorShape: {
-                    if (cropping) {
+                    if (magnifierActive) {
+                        return Qt.BlankCursor
+                    } else if (cropping) {
                         return Qt.CrossCursor
                     } else if (parent.dragging) {
                         return Qt.ClosedHandCursor
@@ -261,7 +265,13 @@ Rectangle {
             WheelHandler {
                 onWheel: function(event) {
                     var delta = event.angleDelta.y / 120
-                    zoomImage(delta, event.x, event.y)
+                    if (magnifierActive) {
+                        // 调节放大镜尺寸，范围建议在 100 到 600 之间
+                        var newSize = magnifierSize + delta * 20
+                        magnifierSize = Math.max(100, Math.min(600, newSize))
+                    } else {
+                        zoomImage(delta, event.x, event.y)
+                    }
                 }
             }
 
@@ -420,6 +430,8 @@ Rectangle {
     Magnifier {
         id: idMagnifier
         z: 100
+        width: imageViewer.magnifierSize
+        height: imageViewer.magnifierSize
         sourceItem: idImage
         cursorPos: imageViewer.mousePosition
         active: imageViewer.magnifierActive && !imageViewer.isSlidePlayingInternal

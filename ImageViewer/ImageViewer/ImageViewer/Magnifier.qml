@@ -3,8 +3,7 @@ import QtQuick.Effects
 
 Item {
     id: magnifier
-    width: 200
-    height: 200
+    // 尺寸现在由父组件（Viewer）控制
     visible: active && sourceItem !== null
 
     property var sourceItem: null
