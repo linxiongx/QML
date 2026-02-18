@@ -4,7 +4,7 @@ project(ImageViewer VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickEffects)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -41,6 +41,7 @@ qt_add_qml_module(appImageViewer
         QML_FILES ImageViewer.qml
         QML_FILES SetWallpaperToolButton.qml
         QML_FILES InfoToolButton.qml
+        QML_FILES Magnifier.qml
         RESOURCES res/app.png
         RESOURCES res/skin.png
         RESOURCES res/skin_black.png
@@ -61,7 +62,7 @@ set_target_properties(appImageViewer PROPERTIES
 )
 
 target_link_libraries(appImageViewer
-    PRIVATE Qt6::Quick
+    PRIVATE Qt6::Quick Qt6::QuickEffects
 )
 
 # Windows 平台需要链接额外的系统库用于设置桌面背景

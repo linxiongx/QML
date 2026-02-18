@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 
 /**
  * ImageViewer 组件 - 核心图片显示和交互逻辑
@@ -26,6 +27,33 @@ Rectangle {
 
     color: "black"
     z: 0
+    focus: true // 确保可以捕获键盘事件
+
+    // 局部放大镜状态
+    property bool magnifierActive: false
+    property point mousePosition: Qt.point(0, 0)
+
+    Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_Control) {
+            magnifierActive = true
+            event.accepted = true
+        }
+    }
+
+    Keys.onReleased: function(event) {
+        if (event.key === Qt.Key_Control) {
+            magnifierActive = false
+            event.accepted = true
+        }
+    }
+
+    // 全局鼠标跟踪 (Qt 6 HoverHandler - 极其轻量且不拦截事件)
+    HoverHandler {
+        id: globalMouseTracker
+        onPointChanged: {
+            imageViewer.mousePosition = Qt.point(point.position.x, point.position.y)
+        }
+    }
 
     // 外部属性接口
     property url imageSource: ""
@@ -388,7 +416,12 @@ Rectangle {
     }
 
     // 设置幻灯片播放状态
-    function setSlidePlaying(isPlaying) {
-        isSlidePlayingInternal = isPlaying
+    // 局部放大镜组件
+    Magnifier {
+        id: idMagnifier
+        z: 100
+        sourceItem: idImage
+        cursorPos: imageViewer.mousePosition
+        active: imageViewer.magnifierActive && !imageViewer.isSlidePlayingInternal
     }
 }
