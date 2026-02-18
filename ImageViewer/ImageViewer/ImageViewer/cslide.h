@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QVariant>
 #include "undomanager.h"
 
 class CSlide : public QObject
@@ -46,6 +47,7 @@ public:
     Q_INVOKABLE bool canUndo() const; // 检查是否可以撤销
     Q_INVOKABLE bool setAsWallpaper(QString imagePath, int clickCount = 0); // 设置图片为桌面背景，支持多种平铺模式
     Q_INVOKABLE QString getWallpaperStyleName(int clickCount); // 获取平铺模式名称
+    Q_INVOKABLE QVariantMap getImageInfo(QString imagePath); // 获取图片详细信息
 
 private:
     bool restoreFromTrash(const QString& filePath); // 从回收站恢复文件

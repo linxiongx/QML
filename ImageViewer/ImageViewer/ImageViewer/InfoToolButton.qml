@@ -4,9 +4,13 @@ import QtQuick.Layouts
 Item
 {
     id: idContainer;
-    property alias text: idText.text;
-    property alias imageSource: idImage.source;
-    property alias textColor: idText.color;
+
+    // 外部属性
+    property string text: "图片信息"
+    property string imageSource: Qt.resolvedUrl("res/favicon.ico")
+    property bool enabled: true
+    property color textColor: "black" 
+
     signal clicked
 
     implicitWidth: childrenRect.width;
@@ -14,15 +18,16 @@ Item
 
     RowLayout
     {
-
-        spacing:2;
+        spacing: 2;
 
         Text
         {
             id: idText;
-            text: "旋转"
+            text: idContainer.text;
             font.pixelSize: 12
             renderType: Text.QtRendering
+            opacity: idContainer.enabled ? 1.0 : 0.5
+            color: idContainer.textColor
         }
 
         Item
@@ -33,7 +38,8 @@ Item
             Image
             {
                 id: idImage;
-                source: Qt.resolvedUrl("res/favicon.ico");
+                source: idContainer.imageSource;
+                opacity: idContainer.enabled ? 1.0 : 0.5
                 property real initialY: 0;
 
                 Component.onCompleted:
@@ -51,15 +57,17 @@ Item
                 }
             }
         }
-
     }
 
     MouseArea
     {
         anchors.fill: parent;
+        hoverEnabled: true
         onClicked:
         {
-            idContainer.clicked();
+            if (idContainer.enabled) {
+                idContainer.clicked()
+            }
         }
         onPressed:
         {

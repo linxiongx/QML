@@ -31,9 +31,26 @@ Rectangle {
     // 信号定义
     signal rotateClicked()
     signal rotateDegreeChanged(real angle)
+    signal infoClicked()
 
     // 内部属性
     property int currentRotationAngle: 0
+
+    // 统一的按钮文字颜色
+    property color commonTextColor: "black"
+
+    // 图片信息按钮 - 放置在最左侧
+    InfoToolButton {
+        id: infoButton
+        anchors.left: parent.left
+        anchors.leftMargin: 20
+        anchors.verticalCenter: parent.verticalCenter
+        textColor: toolBar.commonTextColor
+        onClicked: {
+            console.log("图片信息按钮被点击")
+            toolBar.infoClicked()
+        }
+    }
 
     RowLayout {
         anchors.right: parent.right
@@ -45,6 +62,7 @@ Rectangle {
         // 旋转按钮
         RotateToolButton {
             id: rotateButton
+            textColor: toolBar.commonTextColor
             onClicked: {
                 // 旋转90度
                 currentRotationAngle = (currentRotationAngle + 90) % 360
@@ -59,12 +77,14 @@ Rectangle {
             marginValue: toolBar.marginValue + 2
             imageSource: toolBar.imageSource
             slideEngine: toolBar.slideEngine
+            textColor: toolBar.commonTextColor
         }
 
         // 设置桌面背景按钮
         SetWallpaperToolButton {
             id: wallpaperButton
             slideEngine: toolBar.slideEngine
+            textColor: toolBar.commonTextColor
             onWallpaperRequested: function(clickCount) {
                 if (toolBar.slideEngine && toolBar.imageSource !== "") {
                     var imagePath = toolBar.imageSource.toString().replace("file:///", "")

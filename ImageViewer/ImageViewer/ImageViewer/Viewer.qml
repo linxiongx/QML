@@ -69,7 +69,6 @@ Rectangle {
 
     ScrollView {
         id: scrollView
-
         anchors.fill: parent
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ScrollBar.vertical.policy: ScrollBar.AlwaysOff
@@ -295,9 +294,10 @@ Rectangle {
         }
 
         currentRotationAngle = 0
-        imageRotation.angle = 0
         imageContainer.x = (width - imageContainer.width) / 2
         imageContainer.y = (height - imageContainer.height) / 2
+
+        zoomChanged(imageScale)
     }
 
     // 判断图片是否处于初始状态（适应窗口大小）
@@ -325,6 +325,8 @@ Rectangle {
             // 居中显示
             imageContainer.x = (width - imageContainer.width) / 2
             imageContainer.y = (height - imageContainer.height) / 2
+
+            zoomChanged(imageScale)
         }
     }
 

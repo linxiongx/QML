@@ -6,6 +6,7 @@ Item
     id: idContainer;
     property alias text: idText.text;
     property alias imageSource: idImage.source;
+    property alias textColor: idText.color;
     signal clicked
 
     implicitWidth: childrenRect.width;
@@ -20,6 +21,8 @@ Item
         {
             id: idText;
             text: "浏览"
+            font.pixelSize: 12
+            renderType: Text.QtRendering
         }
 
         Item

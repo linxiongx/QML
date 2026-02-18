@@ -13,6 +13,7 @@ Item
     property var slideEngine: null
     property int clickCount: 0
     property string currentStyleName: "拉伸"
+    property color textColor: "black" // 默认颜色，将被 MyToolBar 覆盖
 
     signal clicked
     signal wallpaperRequested(int clickCount)
@@ -28,7 +29,10 @@ Item
         {
             id: idText;
             text: idContainer.text;
+            font.pixelSize: 12
+            renderType: Text.QtRendering
             opacity: idContainer.enabled ? 1.0 : 0.5
+            color: idContainer.textColor
         }
 
         Item

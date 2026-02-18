@@ -40,6 +40,7 @@ qt_add_qml_module(appImageViewer
         QML_FILES CropSelection.qml
         QML_FILES ImageViewer.qml
         QML_FILES SetWallpaperToolButton.qml
+        QML_FILES InfoToolButton.qml
         RESOURCES res/app.png
         RESOURCES res/skin.png
         RESOURCES res/skin_black.png

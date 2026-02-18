@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QStandardPaths>
+#include <QDateTime>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -683,3 +684,34 @@ QString CSlide::getWallpaperStyleName(int clickCount)
     }
 }
 
+
+QVariantMap CSlide::getImageInfo(QString imagePath)
+{
+    QVariantMap info;
+    
+    // 处理可能的 URL 前缀
+    if (imagePath.startsWith("file:///")) {
+        imagePath.remove("file:///");
+    }
+    imagePath = QUrl::fromPercentEncoding(imagePath.toUtf8());
+    imagePath = QDir::fromNativeSeparators(imagePath);
+
+    QFileInfo fileInfo(imagePath);
+    if (!fileInfo.exists()) {
+        info["name"] = "文件不存在";
+        return info;
+    }
+
+    info["name"] = fileInfo.fileName();
+    info["size"] = fileInfo.size();
+    info["modifyDate"] = fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss");
+
+    QImage image(imagePath);
+    if (!image.isNull()) {
+        info["info"] = QString("%1 x %2").arg(image.width()).arg(image.height());
+    } else {
+        info["info"] = "无法读取分辨率";
+    }
+
+    return info;
+}

@@ -57,6 +57,10 @@ Item
         onRotateDegreeChanged: function(angle) {
             idImageViewer.setRotationAngle(angle)
         }
+
+        onInfoClicked: {
+            idMyImageInfo.visible = !idMyImageInfo.visible
+        }
     }
 
     // 获取幻灯片按钮引用（用于快捷键处理）
@@ -296,13 +300,14 @@ Item
         id: idMyImageInfo
         anchors {
             top: idToolBarRectangle.bottom
-            right: parent.right
+            left: parent.left
             topMargin: 10
-            rightMargin: 10
+            leftMargin: 10
         }
         visible: false
         imageSource: idImageViewer.imageSource
         scaleValue: Math.round(root.imageScale * 100)
+        opacity: 0.6
     }
 
     // 鼠标导航箭头
